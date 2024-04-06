@@ -16,7 +16,7 @@ export default class MyPlugin extends Plugin {
 
 	async onload() {
 		this.addCommand({
-			id: 'opsidian-alias-picker-pick-alias',
+			id: 'alias-picker-pick-alias',
 			name: 'Pick alias',
 			checkCallback: (checking: boolean) => {
 				const context = this.getSelectedLinkAndContext();
@@ -44,7 +44,7 @@ export default class MyPlugin extends Plugin {
 			}
 		});
 		this.addCommand({
-			id: 'opsidian-alias-picker-pick-block',
+			id: 'alias-picker-pick-block',
 			name: 'Pick block',
 			checkCallback: (checking: boolean) => {
 				const context = this.getSelectedLinkAndContext();
