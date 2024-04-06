@@ -10,6 +10,8 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
 	"strictNullChecks": true,
     "lib": [
       "DOM",

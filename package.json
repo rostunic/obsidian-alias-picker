@@ -1,8 +1,12 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "obsidian-alias-picker",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "This plugin allows to pick an alias of a link",
 	"main": "main.js",
+	"repository": {
+		"url": "https://github.com/rostunic/obsidian-alias-picker.git",
+		"type": "git"
+	},
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
