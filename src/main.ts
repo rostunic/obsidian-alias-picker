@@ -1,60 +1,16 @@
-import { App, BlockCache, CachedMetadata, Editor, EditorPosition, FuzzySuggestModal, LinkCache, Loc, MarkdownView, Plugin, TFile, parseLinktext } from 'obsidian';
+import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownView, Plugin, TFile, parseLinktext } from 'obsidian';
+import { AliasPicker } from './AliasPicker';
+import { BlockPicker } from './BlockPicker';
 
+type Context = {
 
-class AliasPicker extends FuzzySuggestModal<string> {
-	getItems(): string[] {
-		return this.aliases;
-	}
-	getItemText(item: string): string {
-		return item;
-	}
-	onChooseItem(item: string, evt: MouseEvent | KeyboardEvent): void {
-		this.chooseItem(item);
-	}
-	constructor(app: App, private targetFile: TFile, private link: LinkCache, private aliases: string[],
-		private editor: Editor
-	) {
-		super(app);
-	}
-	chooseItem(item: string) {
-		const start = LocToEditorPosition(this.link.position.start);
-		const end = this.editor.offsetToPos(this.link.position.end.offset);
-		const parsed = parseLinktext(this.link.original);
-		const newLink = this.app.fileManager.generateMarkdownLink(this.targetFile, parsed.path, parsed.subpath.replace(/\)+$/, ''), item);
-		this.editor.replaceRange(newLink, start, end);
-		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length + 1);
-		this.editor.setCursor(newPosition);
-	}
+	activeEditor: MarkdownView,
+	editor: Editor,
+	fileCache: CachedMetadata,
+	currentLink: LinkCache,
+	file: TFile,
+
 }
-class BlockPicker extends FuzzySuggestModal<BlockCache> {
-	getItems(): BlockCache[] {
-		return this.Blocks;
-	}
-	getItemText(item: BlockCache): string {
-		// const start = PosToEditorPosition(item.position.start);
-		// const end = PosToEditorPosition(item.position.end);
-		const text = this.targetFileContent.slice(item.position.start.offset, item.position.end.offset);
-		return text;
-	}
-	onChooseItem(item: BlockCache, evt: MouseEvent | KeyboardEvent): void {
-		this.chooseItem(item);
-	}
-	constructor(app: App, private targetFile: TFile, private targetFileContent : string, private link: LinkCache, private Blocks: BlockCache[],
-		private editor: Editor
-	) {
-		super(app);
-	}
-	chooseItem(block: BlockCache) {
-		const start = LocToEditorPosition(this.link.position.start);
-		const end = LocToEditorPosition(this.link.position.end);
-		const parsed = parseLinktext(this.link.original);
-		const newLink = this.app.fileManager.generateMarkdownLink(this.targetFile, parsed.path, "#^" + block.id, this.link.displayText);
-		this.editor.replaceRange(newLink, start, end);
-		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length + 1);
-		this.editor.setCursor(newPosition);
-	}
-}
-
 
 export default class MyPlugin extends Plugin {
 
@@ -110,7 +66,7 @@ export default class MyPlugin extends Plugin {
 
 	}
 
-	async pickBlock(context:Context, allowedBlocks: BlockCache[] ) {
+	async pickBlock(context: Context, allowedBlocks: BlockCache[]) {
 		const targetFileContent = await this.app.vault.read(context.file);
 		const aliasPicker = new BlockPicker(this.app, context.file, targetFileContent, context.currentLink, allowedBlocks, context.editor);
 		if (allowedBlocks.length === 1) {
@@ -153,18 +109,4 @@ export default class MyPlugin extends Plugin {
 	onunload() {
 
 	}
-}
-
-function LocToEditorPosition(location: Loc): EditorPosition {
-	return { line: location.line, ch: location.col }
-}
-
-type Context = {
-
-	activeEditor: MarkdownView,
-	editor: Editor,
-	fileCache: CachedMetadata,
-	currentLink: LinkCache,
-	file: TFile,
-
 }
