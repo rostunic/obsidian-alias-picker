@@ -5,6 +5,6 @@
 	"minAppVersion": "0.15.0",
 	"description": "This plugin allows to pick an alias or block of a link.",
 	"author": "rostunic",
-	"authorUrl": "https://github.com/rostunic/obsidian-alias-picker.git",
+	"authorUrl": "https://github.com/rostunic",
 	"isDesktopOnly": false
 }
