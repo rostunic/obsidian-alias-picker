@@ -12,7 +12,7 @@ type Context = {
 
 }
 
-export default class MyPlugin extends Plugin {
+export default class AliasPickerPlugin extends Plugin {
 
 	async onload() {
 		this.addCommand({
