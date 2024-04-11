@@ -3,7 +3,7 @@
 	"name": "Alias Picker",
 	"version": "1.0.1",
 	"minAppVersion": "1.5.12",
-	"description": "This plugin allows to pick an alias or block of a link.",
+	"description": "Pick aliases or blocks of links.",
 	"author": "rostunic",
 	"authorUrl": "https://github.com/rostunic",
 	"isDesktopOnly": false

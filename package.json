@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-alias-picker",
 	"version": "1.0.1",
-	"description": "This plugin allows to pick an alias or block of a link",
+	"description": "Pick aliases or blocks of links.",
 	"main": "main.js",
 	"repository": {
 		"url": "https://github.com/rostunic/obsidian-alias-picker.git",
