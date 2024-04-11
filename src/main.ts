@@ -16,7 +16,7 @@ export default class AliasPickerPlugin extends Plugin {
 
 	async onload() {
 		this.addCommand({
-			id: 'alias-picker-pick-alias',
+			id: 'pick-alias',
 			name: 'Pick alias',
 			checkCallback: (checking: boolean) => {
 				const context = this.getSelectedLinkAndContext();
@@ -44,7 +44,7 @@ export default class AliasPickerPlugin extends Plugin {
 			}
 		});
 		this.addCommand({
-			id: 'alias-picker-pick-block',
+			id: 'pick-block',
 			name: 'Pick block',
 			checkCallback: (checking: boolean) => {
 				const context = this.getSelectedLinkAndContext();
