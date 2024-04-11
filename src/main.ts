@@ -91,7 +91,7 @@ export default class AliasPickerPlugin extends Plugin {
 		if (!currentLink) return;
 		const parsedLink = parseLinktext(currentLink.link);
 		const file = this.app.vault.getFileByPath(parsedLink.path)
-			?? this.app.vault.getFiles().find(x => x.name == parsedLink.path);
+			?? this.app.metadataCache.getFirstLinkpathDest(parsedLink.path, '');
 		if (!file) return;
 
 		const fileCache = this.app.metadataCache.getFileCache(file);
