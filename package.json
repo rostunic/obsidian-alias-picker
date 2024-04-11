@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-alias-picker",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Pick aliases or blocks of links.",
 	"main": "main.js",
 	"repository": {
