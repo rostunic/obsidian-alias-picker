@@ -10,3 +10,5 @@ Pick block: Modify the referenced block within the file using the '#^BlockIdenti
 ## How to use:
 With the cursor on the link, execute the 'Pick alias' or 'Pick block' command from the plugin menu or via keyboard shortcuts.
 Choose from the available blocks or aliases to make your desired changes.
+
+You should assign a keyboard shortcut to the 'Pick alias' and 'Pick block' commands for a more efficient workflow.
