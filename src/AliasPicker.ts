@@ -21,7 +21,7 @@ export class AliasPicker extends FuzzySuggestModal<string> {
 		const parsed = parseLinktext(this.link.original);
 		const newLink = this.app.fileManager.generateMarkdownLink(this.targetFile, parsed.path, parsed.subpath.replace(/\)+$/, ''), item);
 		this.editor.replaceRange(newLink, start, end);
-		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length + 1);
+		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length);
 		this.editor.setCursor(newPosition);
 	}
 }

@@ -22,7 +22,7 @@ export class BlockPicker extends FuzzySuggestModal<BlockCache> {
 		const parsed = parseLinktext(this.link.original);
 		const newLink = this.app.fileManager.generateMarkdownLink(this.targetFile, parsed.path, "#^" + block.id, this.link.displayText);
 		this.editor.replaceRange(newLink, start, end);
-		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length + 1);
+		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length);
 		this.editor.setCursor(newPosition);
 	}
 }
