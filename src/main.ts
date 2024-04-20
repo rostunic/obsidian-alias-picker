@@ -1,10 +1,9 @@
-import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownView, Plugin, TFile, parseLinktext } from 'obsidian';
+import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Plugin, TFile, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 
 type Context = {
 
-	activeEditor: MarkdownView,
 	editor: Editor,
 	fileCache: CachedMetadata,
 	currentLink: LinkCache,
@@ -18,8 +17,8 @@ export default class AliasPickerPlugin extends Plugin {
 		this.addCommand({
 			id: 'pick-alias',
 			name: 'Pick alias',
-			checkCallback: (checking: boolean) => {
-				const context = this.getSelectedLinkAndContext();
+			editorCheckCallback: (checking: boolean, editor: Editor, markdownFileInfo : MarkdownFileInfo) => {
+				const context = this.getSelectedLinkAndContext(editor, markdownFileInfo);
 				if (!context) return;
 
 				if (!context.fileCache?.frontmatter) return;
@@ -46,17 +45,16 @@ export default class AliasPickerPlugin extends Plugin {
 		this.addCommand({
 			id: 'pick-block',
 			name: 'Pick block',
-			checkCallback: (checking: boolean) => {
-				const context = this.getSelectedLinkAndContext();
+			editorCheckCallback: (checking: boolean, editor : Editor, activeFileInfo : MarkdownFileInfo) => {
+				const context = this.getSelectedLinkAndContext(editor, activeFileInfo);
 				if (!context) return;
 
 				const blocks = context.fileCache.blocks;
 				if (!blocks) return;
 
-				const allowedBlocks = Object.values(blocks);
-				if (allowedBlocks.length === 0) return;
-
 				if (!checking) {
+					const allowedBlocks = Object.values(blocks);
+					if (allowedBlocks.length === 0) return;
 					this.pickBlock(context, allowedBlocks);
 				}
 
@@ -77,11 +75,8 @@ export default class AliasPickerPlugin extends Plugin {
 
 	}
 
-	getSelectedLinkAndContext(): Context | undefined {
-		const activeEditor = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (!activeEditor) return;
-		const editor = activeEditor?.editor;
-		const currentFile = activeEditor.file;
+	getSelectedLinkAndContext(editor: Editor, activeFileInfo: MarkdownFileInfo): Context | undefined {
+		const currentFile = activeFileInfo.file;
 		if (!currentFile || !editor) return;
 		const currentCache = this.app.metadataCache.getFileCache(currentFile);
 		const links = currentCache?.links;
@@ -98,7 +93,6 @@ export default class AliasPickerPlugin extends Plugin {
 		if (!fileCache) return;
 
 		return {
-			activeEditor,
 			editor,
 			fileCache,
 			currentLink,
