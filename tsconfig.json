@@ -18,9 +18,13 @@
       "ES5",
       "ES6",
       "ES7"
-    ]
+    ],
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
