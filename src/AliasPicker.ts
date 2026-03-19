@@ -18,10 +18,14 @@ export class AliasPicker extends FuzzySuggestModal<string> {
 	chooseItem(item: string) {
 		const start = this.editor.offsetToPos(this.link.position.start.offset);
 		const end = this.editor.offsetToPos(this.link.position.end.offset);
-		const parsed = parseLinktext(this.link.original);
-		const newLink = this.app.fileManager.generateMarkdownLink(this.targetFile, parsed.path, parsed.subpath.replace(/\)+$/, ''), item);
+		const newLink = AliasPicker.generateLinkWithAlias(this.app, this.targetFile, item, this.link);
 		this.editor.replaceRange(newLink, start, end);
 		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length);
 		this.editor.setCursor(newPosition);
+	}
+
+	public static generateLinkWithAlias(app: App, file: TFile, alias: string, oldLink: LinkCache) {
+		const parsed = parseLinktext(oldLink.original);
+		return app.fileManager.generateMarkdownLink(file, parsed.path, parsed.subpath.replace(/\)+$/, ''), alias);
 	}
 }

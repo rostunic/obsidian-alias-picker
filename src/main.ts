@@ -1,6 +1,8 @@
-import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Plugin, TFile, parseLinktext } from 'obsidian';
+import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
+import { AliasCache } from './AliasCache';
+import { AliasRenameListener } from './AliasRenameListener';
 
 type Context = {
 
@@ -12,12 +14,15 @@ type Context = {
 }
 
 export default class AliasPickerPlugin extends Plugin {
+	private aliasCache: AliasCache = new AliasCache();
+	private aliasRenameListener: AliasRenameListener = new AliasRenameListener(this.app, this.aliasCache);
 
 	async onload() {
+		this.aliasRenameListener.startListening();
 		this.addCommand({
 			id: 'pick-alias',
 			name: 'Pick alias',
-			editorCheckCallback: (checking: boolean, editor: Editor, markdownFileInfo : MarkdownFileInfo) => {
+			editorCheckCallback: (checking: boolean, editor: Editor, markdownFileInfo: MarkdownFileInfo) => {
 				const context = this.getSelectedLinkAndContext(editor, markdownFileInfo);
 				if (!context) return;
 
@@ -45,7 +50,7 @@ export default class AliasPickerPlugin extends Plugin {
 		this.addCommand({
 			id: 'pick-block',
 			name: 'Pick block',
-			editorCheckCallback: (checking: boolean, editor : Editor, activeFileInfo : MarkdownFileInfo) => {
+			editorCheckCallback: (checking: boolean, editor: Editor, activeFileInfo: MarkdownFileInfo) => {
 				const context = this.getSelectedLinkAndContext(editor, activeFileInfo);
 				if (!context) return;
 
@@ -58,6 +63,37 @@ export default class AliasPickerPlugin extends Plugin {
 					this.pickBlock(context, allowedBlocks);
 				}
 
+				return true;
+			}
+		});
+
+		this.addCommand({
+			id: 'fill-known-aliases',
+			name: 'Add all known aliases to the current file',
+			editorCheckCallback: (checking: boolean, editor: Editor, activeFileInfo: MarkdownFileInfo) => {
+				const currentFile = activeFileInfo.file;
+				if (!currentFile || !editor) return;
+
+				const backlinksToCurrentFile = this.aliasRenameListener.getBacklinksArray(currentFile);
+				const aliases = new Set<string>();
+				for (const [, links] of backlinksToCurrentFile) {
+					for (const link of links) {
+						if (link.displayText) aliases.add(link.displayText);
+					}
+				}
+
+				if (!checking) {
+					this.app.fileManager.processFrontMatter(currentFile, async (frontmatter) => {
+						const existingAliases: string[] = frontmatter?.aliases ?? [];
+						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
+						if (newAliases.length === 0) {
+							new Notice('No new aliases to add');
+							return;
+						}
+						frontmatter.aliases.push(...newAliases);
+						new Notice(`Added aliases: ${newAliases.join(', ')}`);
+					});
+				}
 				return true;
 			}
 		});
@@ -101,6 +137,6 @@ export default class AliasPickerPlugin extends Plugin {
 	}
 
 	onunload() {
-
+		this.aliasRenameListener.stopListening();
 	}
 }
