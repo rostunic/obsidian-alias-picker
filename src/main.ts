@@ -3,6 +3,7 @@ import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
 import { AliasRenameListener } from './AliasRenameListener';
+import { PathPicker } from './PathPicker';
 
 type Context = {
 
@@ -41,6 +42,28 @@ export default class AliasPickerPlugin extends Plugin {
 						aliasPicker.chooseItem(allowedNames[0]);
 						return;
 					}
+					aliasPicker.open();
+				}
+
+				return true;
+			}
+		});
+		this.addCommand({
+			id: 'pick-file-with-same-alias',
+			name: 'Pick file with same alias',
+			editorCheckCallback: (checking: boolean, editor: Editor, markdownFileInfo: MarkdownFileInfo) => {
+				const context = this.getSelectedLinkAndContext(editor, markdownFileInfo);
+				if (!context) return;
+
+				const filePathsWithSameAlias = this.aliasCache.getFilesWithAlias(context.currentLink.displayText ?? '');
+				if(filePathsWithSameAlias.every(path => path === context.file.path)) return;
+				const allTargetFiles = filePathsWithSameAlias.map(path => this.app.vault.getFileByPath(path)).filter((file): file is TFile => file !== null);
+
+				const targetFiles = allTargetFiles.filter(file => file.path !== context.file.path);
+				if (targetFiles.length === 0) return;
+
+				if (!checking) {
+					const aliasPicker = new PathPicker(this.app, targetFiles, context.currentLink, context.editor);
 					aliasPicker.open();
 				}
 

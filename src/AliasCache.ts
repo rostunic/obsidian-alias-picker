@@ -6,4 +6,10 @@ export class AliasCache {
 	public setAliases(filePath: string, aliases: string[]) {
 		this.cache[filePath] = aliases;
 	}
+
+	public getFilesWithAlias(alias: string): string[] {
+		return Object.entries(this.cache)
+			.filter(([_, aliases]) => aliases.includes(alias))
+			.map(([filePath, _]) => filePath);
+	}
 }
