@@ -4,6 +4,8 @@ import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
 import { AliasRenameListener } from './AliasRenameListener';
 import { PathPicker } from './PathPicker';
+import { getKnownFileAliases } from './utilities';
+import { AliasOverviewView } from './AliasOverviewView';
 
 type Context = {
 
@@ -19,7 +21,20 @@ export default class AliasPickerPlugin extends Plugin {
 	private aliasRenameListener: AliasRenameListener = new AliasRenameListener(this.app, this.aliasCache);
 
 	async onload() {
+		this.registerView(AliasOverviewView.Type, (leaf) => new AliasOverviewView(leaf, this.aliasCache));
+
 		this.aliasRenameListener.startListening();
+		this.addCommand({
+			id: 'open-alias-overview',
+			name: 'Open Alias Overview',
+			callback: () => {
+				this.app.workspace.getRightLeaf(true)?.setViewState({
+					type: AliasOverviewView.Type,
+					active: true,
+				});
+			}
+		});
+
 		this.addCommand({
 			id: 'pick-alias',
 			name: 'Pick alias',
@@ -56,7 +71,7 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!context) return;
 
 				const filePathsWithSameAlias = this.aliasCache.getFilesWithAlias(context.currentLink.displayText ?? '');
-				if(filePathsWithSameAlias.every(path => path === context.file.path)) return;
+				if (filePathsWithSameAlias.every(path => path === context.file.path)) return;
 				const allTargetFiles = filePathsWithSameAlias.map(path => this.app.vault.getFileByPath(path)).filter((file): file is TFile => file !== null);
 
 				const targetFiles = allTargetFiles.filter(file => file.path !== context.file.path);
@@ -97,15 +112,9 @@ export default class AliasPickerPlugin extends Plugin {
 				const currentFile = activeFileInfo.file;
 				if (!currentFile || !editor) return;
 
-				const backlinksToCurrentFile = this.aliasRenameListener.getBacklinksArray(currentFile);
-				const aliases = new Set<string>();
-				for (const [, links] of backlinksToCurrentFile) {
-					for (const link of links) {
-						if (link.displayText) aliases.add(link.displayText);
-					}
-				}
-
 				if (!checking) {
+					const aliases = getKnownFileAliases(this.app, currentFile);
+
 					this.app.fileManager.processFrontMatter(currentFile, async (frontmatter) => {
 						const existingAliases: string[] = frontmatter?.aliases ?? [];
 						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));

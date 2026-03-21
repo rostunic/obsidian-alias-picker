@@ -9,7 +9,7 @@ export class AliasCache {
 
 	public getFilesWithAlias(alias: string): string[] {
 		return Object.entries(this.cache)
-			.filter(([_, aliases]) => aliases.includes(alias))
+			.filter(([_, aliases]) => aliases.filter && aliases.filter(x => x.toLowerCase !== undefined).map(x => x.toLowerCase()).includes(alias.toLowerCase()))
 			.map(([filePath, _]) => filePath);
 	}
 }

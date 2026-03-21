@@ -6,3 +6,8 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* Alias Overview: indent nested backlinks under each alias */
+.alias-overview-backlinks {
+	padding-left: var(--size-4-4);
+}
