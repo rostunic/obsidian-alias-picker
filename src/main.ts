@@ -4,7 +4,7 @@ import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
 import { AliasRenameListener } from './AliasRenameListener';
 import { PathPicker } from './PathPicker';
-import { getKnownFileAliases } from './utilities';
+import { getKnownFileAliases, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
 
 type Context = {
@@ -43,12 +43,13 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!context) return;
 
 				if (!context.fileCache?.frontmatter) return;
-				const aliases: string[] | undefined = context.fileCache.frontmatter.aliases;
-				if (!aliases) return;
+				const aliases: string[] = normalizeAliases(context.fileCache.frontmatter.aliases);
+				if (aliases.length === 0) return;
 
-				const allowedNames = [...new Set([...aliases, context.file.basename])];
-				if (context.currentLink.displayText)
-					allowedNames.remove(context.currentLink.displayText)
+				let allowedNames = [...new Set([...aliases, context.file.basename])];
+				if (context.currentLink.displayText) {
+					allowedNames = allowedNames.filter(x => x !== context.currentLink.displayText);
+				}
 				if (allowedNames.length === 0) return;
 
 				if (!checking) {
@@ -116,13 +117,13 @@ export default class AliasPickerPlugin extends Plugin {
 					const aliases = getKnownFileAliases(this.app, currentFile);
 
 					this.app.fileManager.processFrontMatter(currentFile, async (frontmatter) => {
-						const existingAliases: string[] = frontmatter?.aliases ?? [];
+						const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
 						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
 						if (newAliases.length === 0) {
 							new Notice('No new aliases to add');
 							return;
 						}
-						frontmatter.aliases.push(...newAliases);
+						frontmatter.aliases = [...existingAliases, ...newAliases];
 						new Notice(`Added aliases: ${newAliases.join(', ')}`);
 					});
 				}

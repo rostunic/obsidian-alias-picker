@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView } from 'obsidian';
 import { AliasCache } from './AliasCache';
-import { getBacklinksArray, getKnownFileAliases } from './utilities';
+import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
 
 type AliasDetails = {
     alias: string;
@@ -259,8 +259,7 @@ export class AliasOverviewView extends ItemView {
                 return;
             }
 
-            const aliasesRaw = fileCache.frontmatter?.aliases;
-            const frontmatterAliases: string[] = Array.isArray(aliasesRaw) ? aliasesRaw : [];
+            const frontmatterAliases: string[] = normalizeAliases(fileCache.frontmatter?.aliases);
 
             const backlinks = getBacklinksArray(this.app, file);
             const aliasCounts: Record<string, AliasDetails> = {};

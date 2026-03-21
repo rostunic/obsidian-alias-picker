@@ -1,4 +1,4 @@
-import { App, Editor, FuzzySuggestModal, LinkCache, TFile, parseLinktext } from 'obsidian';
+import { App, Editor, FuzzySuggestModal, LinkCache, TFile } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 
 export class PathPicker extends FuzzySuggestModal<string> {
@@ -25,10 +25,5 @@ export class PathPicker extends FuzzySuggestModal<string> {
 		this.editor.replaceRange(newLink, start, end);
 		const newPosition = this.editor.offsetToPos(this.link.position.start.offset + newLink.length);
 		this.editor.setCursor(newPosition);
-	}
-
-	public static generateLinkWithAlias(app: App, file: TFile, alias: string, oldLink: LinkCache) {
-		const parsed = parseLinktext(oldLink.original);
-		return app.fileManager.generateMarkdownLink(file, parsed.path, parsed.subpath.replace(/\)+$/, ''), alias);
 	}
 }

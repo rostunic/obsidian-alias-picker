@@ -2,6 +2,17 @@ import { App, TFile, LinkCache } from 'obsidian';
 import { AdvancedMetadataCache } from './obsidian';
 
 
+export function normalizeAliases(raw: unknown): string[] {
+	if (!raw) return [];
+	if (Array.isArray(raw)) return raw.filter((x): x is string => typeof x === 'string' && x.trim().length > 0).map(x => x.trim());
+	if (typeof raw === 'string') {
+		const trimmed = raw.trim();
+		return trimmed.length ? [trimmed] : [];
+	}
+	return [];
+}
+
+
 export function getBacklinksArray(app: App, file: TFile) {
 	// Prefer Obsidian's internal backlinks API if available, but it is not stable across versions.
 	// In some builds it can throw at runtime, so we must fall back to a public-API-based approach.
