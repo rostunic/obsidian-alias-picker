@@ -25,6 +25,37 @@ export class AliasOverviewView extends ItemView {
     private refreshRequested = false;
     private eventsRegistered = false;
 
+    // Expanded state: alias keys and backlink group keys
+    private expandedAliases: Set<string> = new Set();
+    private expandedBacklinks: Set<string> = new Set();
+
+    // Persist expanded state in localStorage (by file path)
+    private getExpandedStateKey(): string {
+        const file = this.app.workspace.getActiveFile();
+        return file ? `alias-overview-expanded:${file.path}` : '';
+    }
+    private loadExpandedState() {
+        const key = this.getExpandedStateKey();
+        if (!key) return;
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const obj = JSON.parse(raw);
+            this.expandedAliases = new Set(obj.aliases || []);
+            this.expandedBacklinks = new Set(obj.backlinks || []);
+        } catch {}
+    }
+    private saveExpandedState() {
+        const key = this.getExpandedStateKey();
+        if (!key) return;
+        try {
+            localStorage.setItem(key, JSON.stringify({
+                aliases: Array.from(this.expandedAliases),
+                backlinks: Array.from(this.expandedBacklinks),
+            }));
+        } catch {}
+    }
+
     override getViewType(): string {
         return AliasOverviewView.Type;
     }
@@ -171,17 +202,19 @@ export class AliasOverviewView extends ItemView {
         }
     }
 
-    private renderBacklinkGroup(parent: HTMLElement, group: BacklinkGroup) {
-        const groupContainer = parent.createEl('div', { cls: 'tree-item search-result is-collapsed' });
+    private renderBacklinkGroup(parent: HTMLElement, group: BacklinkGroup, aliasKey: string) {
+        const groupKey = `${aliasKey}\u0000${group.path}`;
+        const expanded = this.expandedBacklinks.has(groupKey);
+        const groupContainer = parent.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
         const headerEl = groupContainer.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
 
-        const iconEl = this.createCollapseIcon(headerEl, true);
+        const iconEl = this.createCollapseIcon(headerEl, !expanded);
         const innerEl = headerEl.createEl('div', { cls: 'tree-item-inner', text: group.file?.basename ?? group.path });
         const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
         flairOuter.createEl('span', { cls: 'tree-item-flair', text: group.links.length.toString() });
 
         const matchesEl = groupContainer.createEl('div', { cls: 'search-results-children' });
-        this.setCollapsedState(groupContainer, iconEl, matchesEl, true);
+        this.setCollapsedState(groupContainer, iconEl, matchesEl, !expanded);
 
         let matchesRendered = false;
 
@@ -189,11 +222,16 @@ export class AliasOverviewView extends ItemView {
             const currentlyCollapsed = groupContainer.hasClass('is-collapsed');
             const nextCollapsed = !currentlyCollapsed;
             this.setCollapsedState(groupContainer, iconEl, matchesEl, nextCollapsed);
-
-            if (!nextCollapsed && !matchesRendered) {
-                matchesRendered = true;
-                await this.renderBacklinkGroupMatches(matchesEl, group);
+            if (nextCollapsed) {
+                this.expandedBacklinks.delete(groupKey);
+            } else {
+                this.expandedBacklinks.add(groupKey);
+                if (!matchesRendered) {
+                    matchesRendered = true;
+                    await this.renderBacklinkGroupMatches(matchesEl, group);
+                }
             }
+            this.saveExpandedState();
         };
 
         iconEl.addEventListener('click', (ev) => {
@@ -212,6 +250,12 @@ export class AliasOverviewView extends ItemView {
         headerEl.addEventListener('click', () => {
             void toggleMatches();
         });
+
+        // If expanded, render matches immediately
+        if (expanded && !matchesRendered) {
+            matchesRendered = true;
+            void this.renderBacklinkGroupMatches(matchesEl, group);
+        }
     }
 
     private renderAliasBacklinks(parent: HTMLElement, aliasDetails: AliasDetails) {
@@ -233,7 +277,7 @@ export class AliasOverviewView extends ItemView {
         }
 
         for (const group of groups) {
-            this.renderBacklinkGroup(parent, group);
+            this.renderBacklinkGroup(parent, group, aliasDetails.alias);
         }
     }
 
@@ -244,6 +288,9 @@ export class AliasOverviewView extends ItemView {
         }
         this.refreshInProgress = true;
 
+        const scrollContainer = this.contentEl;
+        const scrollTopBefore = scrollContainer.scrollTop;
+
         try {
             const file = this.app.workspace.getActiveFile();
             this.contentEl.empty();
@@ -252,6 +299,8 @@ export class AliasOverviewView extends ItemView {
                 this.contentEl.setText('No file selected');
                 return;
             }
+
+            this.loadExpandedState();
 
             const fileCache = this.app.metadataCache.getFileCache(file);
             if (!fileCache) {
@@ -293,33 +342,44 @@ export class AliasOverviewView extends ItemView {
                 const aliasKey = alias.trim();
                 const aliasDetails = aliasCounts[aliasKey];
 
-                const aliasEl = childrenRoot.createEl('div', { cls: 'tree-item search-result is-collapsed' });
+                const expanded = this.expandedAliases.has(aliasKey);
+                const aliasEl = childrenRoot.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
                 const headerEl = aliasEl.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
 
-                const iconEl = this.createCollapseIcon(headerEl, true);
+                const iconEl = this.createCollapseIcon(headerEl, !expanded);
                 headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
                 const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
                 flairOuter.createEl('span', { cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
 
                 const aliasChildren = aliasEl.createEl('div', { cls: 'search-results-children' });
                 aliasChildren.addClass('alias-overview-backlinks');
-                this.setCollapsedState(aliasEl, iconEl, aliasChildren, true);
+                this.setCollapsedState(aliasEl, iconEl, aliasChildren, !expanded);
 
                 headerEl.addEventListener('click', () => {
                     const currentlyCollapsed = aliasEl.hasClass('is-collapsed');
                     const nextCollapsed = !currentlyCollapsed;
                     this.setCollapsedState(aliasEl, iconEl, aliasChildren, nextCollapsed);
-
-                    if (!nextCollapsed && aliasDetails && !renderedAliases.has(aliasKey)) {
-                        renderedAliases.add(aliasKey);
-                        this.renderAliasBacklinks(aliasChildren, aliasDetails);
+                    if (nextCollapsed) {
+                        this.expandedAliases.delete(aliasKey);
+                    } else {
+                        this.expandedAliases.add(aliasKey);
+                        if (aliasDetails && !renderedAliases.has(aliasKey)) {
+                            renderedAliases.add(aliasKey);
+                            this.renderAliasBacklinks(aliasChildren, aliasDetails);
+                        }
+                        if (!aliasDetails || aliasDetails.count === 0) {
+                            aliasChildren.empty();
+                            aliasChildren.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
+                        }
                     }
-
-                    if (!nextCollapsed && (!aliasDetails || aliasDetails.count === 0)) {
-                        aliasChildren.empty();
-                        aliasChildren.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
-                    }
+                    this.saveExpandedState();
                 });
+
+                // If expanded, render backlinks immediately
+                if (expanded && aliasDetails && !renderedAliases.has(aliasKey)) {
+                    renderedAliases.add(aliasKey);
+                    this.renderAliasBacklinks(aliasChildren, aliasDetails);
+                }
             }
 
             const addButton = this.contentEl.createEl('button', { text: 'Add all known aliases to current file' });
@@ -337,6 +397,12 @@ export class AliasOverviewView extends ItemView {
                     new Notice(`Added aliases: ${newAliases.join(', ')}`);
                 });
             });
+
+            // Restore scroll position after rendering
+            requestAnimationFrame(() => {
+                scrollContainer.scrollTop = scrollTopBefore;
+            });
+
         } catch (err) {
             this.contentEl.empty();
             const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
