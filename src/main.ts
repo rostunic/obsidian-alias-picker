@@ -28,7 +28,13 @@ export default class AliasPickerPlugin extends Plugin {
 			id: 'open-alias-overview',
 			name: 'Open Alias Overview',
 			callback: () => {
-				this.app.workspace.getRightLeaf(true)?.setViewState({
+				this.app.workspace.rightSplit.expand();
+				const newLeaf = this.app.workspace.getRightLeaf(true);
+				if(!newLeaf) {
+					console.error('Failed to create new leaf for Alias Overview');
+					return;
+				}
+				newLeaf?.setViewState({
 					type: AliasOverviewView.Type,
 					active: true,
 				});
