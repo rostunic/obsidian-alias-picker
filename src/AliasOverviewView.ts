@@ -43,7 +43,7 @@ export class AliasOverviewView extends ItemView {
             const obj = JSON.parse(raw);
             this.expandedAliases = new Set(obj.aliases || []);
             this.expandedBacklinks = new Set(obj.backlinks || []);
-        } catch {}
+        } catch { }
     }
     private saveExpandedState() {
         const key = this.getExpandedStateKey();
@@ -53,7 +53,7 @@ export class AliasOverviewView extends ItemView {
                 aliases: Array.from(this.expandedAliases),
                 backlinks: Array.from(this.expandedBacklinks),
             }));
-        } catch {}
+        } catch { }
     }
 
     override getViewType(): string {
@@ -62,6 +62,10 @@ export class AliasOverviewView extends ItemView {
 
     override getDisplayText(): string {
         return 'Alias Overview';
+    }
+
+    override getIcon(): string {
+        return 'list-tree';
     }
 
     constructor(leaf: WorkspaceLeaf, private aliasCache: AliasCache) {
