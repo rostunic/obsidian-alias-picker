@@ -2,15 +2,13 @@ import { PluginSettingTab, App, Setting } from 'obsidian';
 import AliasPickerPlugin from './main';
 
 export interface AliasPickerSettingsData {
-	/**
-	 * Whether to split the sidebar when opening the Alias Overview.
-	 * Default: true
-	 */
 	overviewSplitSidebar: boolean;
+	overviewOpenNewLeaf: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	overviewSplitSidebar: true,
+	overviewOpenNewLeaf: false,
 };
 
 export class Settings extends PluginSettingTab {
@@ -43,6 +41,19 @@ export class Settings extends PluginSettingTab {
 					.onChange(async (value) => {
 						const currentSettings = this.plugin.getSettings();
 						currentSettings.overviewSplitSidebar = value;
+						await this.saveSettings(currentSettings);
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Open New Leaf for Alias Overview')
+			.setDesc('Whether to open a new leaf even when the Alias Overview is already open.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.getSettings().overviewOpenNewLeaf)
+					.onChange(async (value) => {
+						const currentSettings = this.plugin.getSettings();
+						currentSettings.overviewOpenNewLeaf = value;
 						await this.saveSettings(currentSettings);
 					})
 			);
