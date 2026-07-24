@@ -6,6 +6,7 @@ import { AliasRenameListener } from './AliasRenameListener';
 import { PathPicker } from './PathPicker';
 import { getKnownFileAliases, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
+import { Settings, AliasPickerSettingsData, DEFAULT_SETTINGS } from './settings';
 
 type Context = {
 
@@ -19,8 +20,11 @@ type Context = {
 export default class AliasPickerPlugin extends Plugin {
 	private aliasCache: AliasCache = new AliasCache();
 	private aliasRenameListener: AliasRenameListener = new AliasRenameListener(this.app, this.aliasCache);
+	private settings: AliasPickerSettingsData = DEFAULT_SETTINGS;
 
 	async onload() {
+		await this.loadSettings();
+		this.addSettingTab(new Settings(this.app, this));
 		this.registerView(AliasOverviewView.Type, (leaf) => new AliasOverviewView(leaf, this.aliasCache));
 
 		this.aliasRenameListener.startListening();
@@ -29,7 +33,8 @@ export default class AliasPickerPlugin extends Plugin {
 			name: 'Open Alias Overview',
 			callback: () => {
 				this.app.workspace.rightSplit.expand();
-				const newLeaf = this.app.workspace.getRightLeaf(true);
+				const split = this.settings.overviewSplitSidebar;
+				const newLeaf = this.app.workspace.getRightLeaf(split);
 				if(!newLeaf) {
 					console.error('Failed to create new leaf for Alias Overview');
 					return;
@@ -177,5 +182,13 @@ export default class AliasPickerPlugin extends Plugin {
 
 	onunload() {
 		this.aliasRenameListener.stopListening();
+	}
+
+	private async loadSettings(): Promise<void> {
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+	}
+
+	public getSettings(): AliasPickerSettingsData {
+		return this.settings;
 	}
 }
