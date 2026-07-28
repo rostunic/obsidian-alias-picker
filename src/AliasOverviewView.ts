@@ -74,18 +74,19 @@ export class AliasOverviewView extends ItemView {
     }
 
     override async onClose() {
-        if (this.refreshTimeoutId !== null) {
-            window.clearTimeout(this.refreshTimeoutId);
-            this.refreshTimeoutId = null;
-        }
+        this.clearRefreshTimeout();
         this.contentEl.empty();
     }
 
-    private scheduleRefresh(delayMs = 250) {
+    private clearRefreshTimeout() {
         if (this.refreshTimeoutId !== null) {
             window.clearTimeout(this.refreshTimeoutId);
             this.refreshTimeoutId = null;
         }
+    }
+
+    private scheduleRefresh(delayMs = 250) {
+        this.clearRefreshTimeout();
         this.refreshTimeoutId = window.setTimeout(() => {
             this.refreshTimeoutId = null;
             void this.refresh();
