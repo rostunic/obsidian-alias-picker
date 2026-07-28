@@ -14,6 +14,8 @@ type BacklinkGroup = {
     links: LinkCache[];
 };
 
+type AliasKey = string & { __brand: 'AliasKey' };
+
 export class AliasOverviewView extends ItemView {
     public static readonly Type = 'alias-overview';
 
@@ -312,11 +314,11 @@ export class AliasOverviewView extends ItemView {
             const frontmatterAliases: string[] = normalizeAliases(fileCache.frontmatter?.aliases);
 
             const backlinks = getBacklinksArray(this.app, file);
-            const aliasCounts: Record<string, AliasDetails> = {};
+            const aliasCounts: Record<AliasKey, AliasDetails> = {};
             for (const [sourcePath, links] of backlinks) {
                 for (const link of links) {
                     if (!link.displayText) continue;
-                    const alias = link.displayText.trim();
+                    const alias = this.getAliasKey(link.displayText);
                     if (!alias) continue;
 
                     aliasCounts[alias] = (aliasCounts[alias] ?? { alias, count: 0, backlinks: [] });
@@ -338,49 +340,8 @@ export class AliasOverviewView extends ItemView {
             const searchResultContainer = this.contentEl.createEl('div', { cls: 'search-result-container' });
             const childrenRoot = searchResultContainer.createEl('div', { cls: 'search-results-children' });
 
-            const renderedAliases = new Set<string>();
             for (const alias of allAliases) {
-                const aliasKey = alias.trim();
-                const aliasDetails = aliasCounts[aliasKey];
-
-                const expanded = this.expandedAliases.has(aliasKey);
-                const aliasEl = childrenRoot.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
-                const headerEl = aliasEl.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
-
-                const iconEl = this.createCollapseIcon(headerEl, !expanded);
-                headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
-                const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
-                flairOuter.createEl('span', { cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
-
-                const aliasChildren = aliasEl.createEl('div', { cls: 'search-results-children' });
-                aliasChildren.addClass('alias-overview-backlinks');
-                this.setCollapsedState(aliasEl, iconEl, aliasChildren, !expanded);
-
-                headerEl.addEventListener('click', () => {
-                    const currentlyCollapsed = aliasEl.hasClass('is-collapsed');
-                    const nextCollapsed = !currentlyCollapsed;
-                    this.setCollapsedState(aliasEl, iconEl, aliasChildren, nextCollapsed);
-                    if (nextCollapsed) {
-                        this.expandedAliases.delete(aliasKey);
-                    } else {
-                        this.expandedAliases.add(aliasKey);
-                        if (aliasDetails && !renderedAliases.has(aliasKey)) {
-                            renderedAliases.add(aliasKey);
-                            this.renderAliasBacklinks(aliasChildren, aliasDetails);
-                        }
-                        if (!aliasDetails || aliasDetails.count === 0) {
-                            aliasChildren.empty();
-                            aliasChildren.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
-                        }
-                    }
-                    this.saveExpandedState();
-                });
-
-                // If expanded, render backlinks immediately
-                if (expanded && aliasDetails && !renderedAliases.has(aliasKey)) {
-                    renderedAliases.add(aliasKey);
-                    this.renderAliasBacklinks(aliasChildren, aliasDetails);
-                }
+                this.renderAliasInRoot(alias, aliasCounts, childrenRoot);
             }
 
             const addButton = this.contentEl.createEl('button', { text: 'Add all known aliases to current file' });
@@ -414,6 +375,56 @@ export class AliasOverviewView extends ItemView {
                 this.refreshRequested = false;
                 this.scheduleRefresh(0);
             }
+        }
+    }
+
+    private getAliasKey(alias: string): AliasKey {
+        return alias.trim() as AliasKey;
+    }
+
+    private renderAliasInRoot(alias: string, aliasCounts: Record<AliasKey, AliasDetails>, childrenRoot: HTMLDivElement) {
+        const aliasKey = this.getAliasKey(alias);
+        const aliasDetails = aliasCounts[aliasKey];
+
+        const expanded = this.expandedAliases.has(aliasKey);
+        const aliasEl = childrenRoot.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
+        const headerEl = aliasEl.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
+
+        const iconEl = this.createCollapseIcon(headerEl, !expanded);
+        headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
+        const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
+        flairOuter.createEl('span', { cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
+
+        const aliasChildren = aliasEl.createEl('div', { cls: 'search-results-children' });
+        aliasChildren.addClass('alias-overview-backlinks');
+        this.setCollapsedState(aliasEl, iconEl, aliasChildren, !expanded);
+
+        let isRendered = false;
+
+        headerEl.addEventListener('click', () => {
+            const currentlyCollapsed = aliasEl.hasClass('is-collapsed');
+            const nextCollapsed = !currentlyCollapsed;
+            this.setCollapsedState(aliasEl, iconEl, aliasChildren, nextCollapsed);
+            if (nextCollapsed) {
+                this.expandedAliases.delete(aliasKey);
+            } else {
+                this.expandedAliases.add(aliasKey);
+                if (aliasDetails && !isRendered) {
+                    isRendered = true;
+                    this.renderAliasBacklinks(aliasChildren, aliasDetails);
+                }
+                if (!aliasDetails || aliasDetails.count === 0) {
+                    aliasChildren.empty();
+                    aliasChildren.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
+                }
+            }
+            this.saveExpandedState();
+        });
+
+        // If expanded, render backlinks immediately
+        if (expanded && aliasDetails && !isRendered) {
+            isRendered = true;
+            this.renderAliasBacklinks(aliasChildren, aliasDetails);
         }
     }
 }
