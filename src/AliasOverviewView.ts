@@ -37,23 +37,19 @@ export class AliasOverviewView extends ItemView {
     private loadExpandedState() {
         const key = this.getExpandedStateKey();
         if (!key) return;
-        try {
-            const raw = localStorage.getItem(key);
-            if (!raw) return;
-            const obj = JSON.parse(raw);
-            this.expandedAliases = new Set(obj.aliases || []);
-            this.expandedBacklinks = new Set(obj.backlinks || []);
-        } catch { }
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        const obj = JSON.parse(raw);
+        this.expandedAliases = new Set(obj.aliases || []);
+        this.expandedBacklinks = new Set(obj.backlinks || []);
     }
     private saveExpandedState() {
         const key = this.getExpandedStateKey();
         if (!key) return;
-        try {
-            localStorage.setItem(key, JSON.stringify({
-                aliases: Array.from(this.expandedAliases),
-                backlinks: Array.from(this.expandedBacklinks),
-            }));
-        } catch { }
+        localStorage.setItem(key, JSON.stringify({
+            aliases: Array.from(this.expandedAliases),
+            backlinks: Array.from(this.expandedBacklinks),
+        }));
     }
 
     override getViewType(): string {
