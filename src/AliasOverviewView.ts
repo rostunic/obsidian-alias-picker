@@ -3,7 +3,7 @@ import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
 
 type AliasDetails = {
-    alias: string;
+    alias: AliasKey;
     count: number;
     backlinks: { path: string; links: LinkCache[] }[];
 };
@@ -15,6 +15,7 @@ type BacklinkGroup = {
 };
 
 type AliasKey = string & { __brand: 'AliasKey' };
+type BacklinkGroupKey = string & { __brand: 'BacklinkGroupKey' };
 
 export class AliasOverviewView extends ItemView {
     public static readonly Type = 'alias-overview';
@@ -28,8 +29,8 @@ export class AliasOverviewView extends ItemView {
     private eventsRegistered = false;
 
     // Expanded state: alias keys and backlink group keys
-    private expandedAliases: Set<string> = new Set();
-    private expandedBacklinks: Set<string> = new Set();
+    private expandedAliases: Set<AliasKey> = new Set();
+    private expandedBacklinks: Set<BacklinkGroupKey> = new Set();
 
     // Persist expanded state in localStorage (by file path)
     private getExpandedStateKey(): string {
@@ -205,8 +206,12 @@ export class AliasOverviewView extends ItemView {
         }
     }
 
-    private renderBacklinkGroup(parent: HTMLElement, group: BacklinkGroup, aliasKey: string) {
-        const groupKey = `${aliasKey}\u0000${group.path}`;
+    private getBacklinkGroupKey(aliasKey: AliasKey, group: BacklinkGroup): BacklinkGroupKey {
+        return `${aliasKey}\u0000${group.path}` as BacklinkGroupKey;
+    }
+
+    private renderBacklinkGroup(parent: HTMLElement, group: BacklinkGroup, aliasKey: AliasKey) {
+        const groupKey = this.getBacklinkGroupKey(aliasKey, group);
         const expanded = this.expandedBacklinks.has(groupKey);
         const groupContainer = parent.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
         const headerEl = groupContainer.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
