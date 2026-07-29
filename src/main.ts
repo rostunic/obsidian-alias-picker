@@ -7,6 +7,7 @@ import { PathPicker } from './PathPicker';
 import { getKnownFileAliases, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
 import { Settings, AliasPickerSettingsData, DEFAULT_SETTINGS } from './settings';
+import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
 
 type Context = {
 
@@ -156,6 +157,17 @@ export default class AliasPickerPlugin extends Plugin {
 				return true;
 			}
 		});
+
+		this.addCommand({
+			id: "open-backlink-search",
+			name: "Open Backlink Search",
+			callback: () => {
+				new BacklinkSearchModal(
+					this.app
+				).open();
+			}
+		});
+
 
 	}
 

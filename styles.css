@@ -11,3 +11,46 @@ If your plugin does not need CSS, delete this file.
 .alias-overview-backlinks {
 	padding-left: var(--size-4-4);
 }
+
+/* Backlink Search Chips */
+.backlink-search-chips-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-2);
+	padding: var(--size-2-2) var(--size-4-2);
+	margin-bottom: var(--size-2-2);
+	min-height: 24px;
+}
+
+.backlink-search-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--size-2-1);
+	padding: var(--size-2-1) var(--size-4-1);
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-radius: var(--radius-s);
+	font-size: var(--font-ui-smaller);
+}
+
+.backlink-search-chip-close {
+	cursor: pointer;
+	opacity: 0.7;
+	margin-left: var(--size-2-1);
+}
+.backlink-search-chip-close:hover {
+	opacity: 1;
+}
+.backlink-search-chips-excluded .backlink-search-chip {
+	background-color: var(--mod-muted);
+	color: var(--text-muted);
+}
+
+.backlink-search-chips-excluded .backlink-search-chip-close {
+	opacity: 0.5;
+}
+
+.backlink-search-chips-excluded .backlink-search-chip-close:hover {
+	opacity: 1;
+}
+
