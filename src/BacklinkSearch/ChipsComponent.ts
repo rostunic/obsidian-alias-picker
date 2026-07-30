@@ -1,22 +1,23 @@
 // src/BacklinkSearch/ChipsComponent.ts
 
 import { TFile } from "obsidian";
+import { FilePickerItem } from "./FilePickerModal";
 
 export class ChipsComponent {
 
     private chipsEl: HTMLElement;
-    private selectedFiles: TFile[] = [];
+    private selectedFiles: FilePickerItem[] = [];
 
     constructor(
         parentEl: HTMLElement,
-        private readonly onRemove: (file: TFile) => void
+        private readonly onRemove: (file: FilePickerItem) => void
     ) {
         this.chipsEl = parentEl.createDiv({
             cls: "backlink-search-chips"
         });
     }
 
-    setSelectedFiles(files: TFile[]): void {
+    setSelectedFiles(files: FilePickerItem[]): void {
         this.selectedFiles = files;
         this.render();
     }
@@ -28,7 +29,7 @@ export class ChipsComponent {
             const chip = this.chipsEl.createDiv({
                 cls: "backlink-search-chip"
             });
-            chip.setText(file.basename);
+            chip.setText(file.alias);
 
             const closeBtn = chip.createSpan({
                 cls: "backlink-search-chip-close"

@@ -10,9 +10,9 @@ import {
 } from "obsidian";
 
 import { BacklinkEngine } from "./BacklinkEngine";
-import { FilePickerModal } from "./FilePickerModal";
+import { FilePickerItem, FilePickerModal } from "./FilePickerModal";
 import { ChipsComponent } from "./ChipsComponent";
-import { getAliasesForFile } from "./AliasUtils";
+import { AliasEntry, getAliasesForFile } from "./AliasUtils";
 
 interface SearchItem {
     type: "file" | "alias";
@@ -23,10 +23,12 @@ interface SearchItem {
 export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
     private readonly engine: BacklinkEngine;
-    private selectedFiles: TFile[] = [];
-    private excludedBacklinksFiles: TFile[] = [];
+    private selectedFiles: FilePickerItem[] = [];
+    private exactBacklinksFileAliases: FilePickerItem[] = [];
+    private excludedBacklinksFiles: FilePickerItem[] = [];
     private items: SearchItem[] = [];
-    private chipsComponent: ChipsComponent;
+    private includedFilesChipsComponent: ChipsComponent;
+    private exactChipsComponent: ChipsComponent;
     private excludedChipsComponent: ChipsComponent;
 
     constructor(
@@ -45,13 +47,18 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             throw new Error("Could not find input container or prompt results element.");
         }
 
-        this.chipsComponent = this.createChipsContainer(inputContainer, promptResults);
+        this.includedFilesChipsComponent = this.createChipsContainer(inputContainer, promptResults);
+        this.exactChipsComponent = this.createChipsContainer(inputContainer, promptResults);
         this.excludedChipsComponent = this.createExcludedChipsComponent(inputContainer, promptResults);
 
         this.setInstructions([
             {
                 command: "Type +X",
                 purpose: "The search will include only files that reference file X"
+            },
+            {
+                command: "Type *X",
+                purpose: "Like +X, except that the exact alias has to be used in the backlink."
             },
             {
                 command: "Type -X",
@@ -122,18 +129,33 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
             // Alle aktuellen included und excluded Files berücksichtigen
             const files = await this.engine.getPlusCandidates(
-                this.selectedFiles,
-                this.excludedBacklinksFiles
+                this.selectedFiles.map(fileItem => fileItem.file),
+                this.exactBacklinksFileAliases,
+                this.excludedBacklinksFiles.map(fileItem => fileItem.file),
+                true
             );
 
-            this.openFilePickerAndRefresh(files, this.selectedFiles, this.chipsComponent, "Select a file to include in the backlink search");
+            this.openFilePickerAndRefresh(files, this.selectedFiles, this.includedFilesChipsComponent, "Select a file to include in the backlink search");
+        } else if (this.inputEl.value.startsWith("*")) {
+            this.inputEl.value = "";
+
+            // Alle aktuellen included und excluded Files berücksichtigen
+            const files = await this.engine.getPlusCandidates(
+                this.selectedFiles.map(fileItem => fileItem.file),
+                this.exactBacklinksFileAliases,
+                this.excludedBacklinksFiles.map(fileItem => fileItem.file),
+                false
+            );
+
+            this.openFilePickerAndRefresh(files, this.exactBacklinksFileAliases, this.exactChipsComponent, "Select an file alias to include in the backlink search");
         } else if (this.inputEl.value.startsWith("-")) {
             this.inputEl.value = "";
 
             // Alle aktuellen included und excluded Files berücksichtigen
             const files = await this.engine.getMinusCandidates(
-                this.selectedFiles,
-                this.excludedBacklinksFiles
+                this.selectedFiles.map(fileItem => fileItem.file),
+                this.exactBacklinksFileAliases,
+                this.excludedBacklinksFiles.map(fileItem => fileItem.file)
             );
 
             this.openFilePickerAndRefresh(files, this.excludedBacklinksFiles, this.excludedChipsComponent, "Select a file to exclude from the backlink search");
@@ -141,8 +163,8 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     }
 
     private openFilePickerAndRefresh(
-        files: TFile[],
-        selectedFiles: TFile[],
+        files: AliasEntry[],
+        selectedFiles: FilePickerItem[],
         chipsComponent: ChipsComponent,
         placeholder: string
     ): void {
@@ -160,18 +182,18 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     }
 
     private async refresh(): Promise<void> {
-        const files = await this.engine.getIntersection(this.selectedFiles);
+        const files = await this.engine.getIntersection(this.selectedFiles.map(fileItem => fileItem.file), this.exactBacklinksFileAliases);
 
         // Excluded Files ausschließen
         const filteredFiles = files.filter(
-            file => !this.excludedBacklinksFiles.some(excluded => excluded.path === file.path)
+            file => !this.excludedBacklinksFiles.some(excluded => excluded.file.path === file.path)
         );
 
         this.items = this.filesToSearchItems(filteredFiles);
 
         // Refresh the suggestions in the modal
         super.onOpen();
-        this.chipsComponent.setSelectedFiles(this.selectedFiles);
+        this.includedFilesChipsComponent.setSelectedFiles(this.selectedFiles);
         this.excludedChipsComponent.setSelectedFiles(this.excludedBacklinksFiles);
     }
 
@@ -196,16 +218,16 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         return searchItems;
     }
 
-    private removeSelectedFile(fileToRemove: TFile): void {
+    private removeSelectedFile(fileToRemove: FilePickerItem): void {
         this.selectedFiles = this.selectedFiles.filter(
-            file => file.path !== fileToRemove.path
+            fileItem => fileItem.file.path !== fileToRemove.file.path
         );
         void this.refresh();
     }
 
-    private removeExcludedFile(fileToRemove: TFile): void {
+    private removeExcludedFile(fileToRemove: FilePickerItem): void {
         this.excludedBacklinksFiles = this.excludedBacklinksFiles.filter(
-            file => file.path !== fileToRemove.path
+            fileItem => fileItem.file.path !== fileToRemove.file.path
         );
         void this.refresh();
     }

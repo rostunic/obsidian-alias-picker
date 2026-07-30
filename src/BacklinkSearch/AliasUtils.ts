@@ -16,7 +16,7 @@ export function getAliasesForFile(
             .getFileCache(file)
             ?.frontmatter
             ?.aliases
-            ?? [];
+        ?? [];
 
     return Array.isArray(aliases)
         ? aliases
@@ -40,3 +40,9 @@ export function getAllAliasEntries(
     return result;
 }
 
+export function getAliasesAndBaseName(app: App, dest: TFile) {
+    const aliases = new Set<string>();
+    aliases.add(dest.basename);
+    getAliasesForFile(app, dest).forEach(alias => aliases.add(alias));
+    return aliases;
+}

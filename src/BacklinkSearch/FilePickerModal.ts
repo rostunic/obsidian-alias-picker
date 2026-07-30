@@ -7,11 +7,12 @@ import {
     TFile
 } from "obsidian";
 
-import { getAliasesForFile } from "./AliasUtils";
+import { AliasEntry, getAliasesForFile } from "./AliasUtils";
 
-interface FilePickerItem {
+export interface FilePickerItem {
     file: TFile;
     displayText: string;
+    alias: string;
 }
 
 export class FilePickerModal extends FuzzySuggestModal<FilePickerItem> {
@@ -20,8 +21,8 @@ export class FilePickerModal extends FuzzySuggestModal<FilePickerItem> {
 
     constructor(
         app: App,
-        files: TFile[],
-        private readonly callback: (file: TFile) => void
+        files: AliasEntry[],
+        private readonly callback: (filePickerItem: FilePickerItem) => void
     ) {
         super(app);
         // Jede Datei mit ihrem Dateinamen und allen Aliases als separate Einträge
@@ -29,17 +30,10 @@ export class FilePickerModal extends FuzzySuggestModal<FilePickerItem> {
         for (const file of files) {
             // Dateiname als Eintrag
             this.items.push({
-                file,
-                displayText: file.basename
+                file: file.file,
+                displayText: file.alias,
+                alias: file.alias
             });
-
-            // Alle Aliase als separate Einträge
-            for (const alias of getAliasesForFile(app, file)) {
-                this.items.push({
-                    file,
-                    displayText: alias
-                });
-            }
         }
     }
 
@@ -71,7 +65,7 @@ export class FilePickerModal extends FuzzySuggestModal<FilePickerItem> {
     }
 
     onChooseItem(item: FilePickerItem): void {
-        this.callback(item.file);
+        this.callback(item);
     }
 
 }

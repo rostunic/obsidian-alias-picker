@@ -26,3 +26,7 @@ The **Open Backlink Search** command opens a search modal for finding files that
 * Use `-File` to exclude a backlink file and narrow down the `+` selection. The `+` selection only considers files that are referenced by backlinks, without including files excluded with `-`.
 
 Multiple `+` selections are combined using an intersection: only files that contain backlinks to **all selected files** are shown.
+
+### Search with Exact Alias
+
+* Use `*Alias` to select a specific alias. The search will only include files where a backlink uses the **exact alias text** (not just the file reference). This is similar to `+X`, but requires the exact alias to be used in the backlink search.
