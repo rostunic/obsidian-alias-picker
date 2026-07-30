@@ -13,6 +13,7 @@ import { BacklinkEngine } from "./BacklinkEngine";
 import { FilePickerItem, FilePickerModal } from "./FilePickerModal";
 import { ChipsComponent } from "./ChipsComponent";
 import { AliasEntry, getAliasesForFile } from "./AliasUtils";
+import { AliasPickerSettingsData } from "../settings";
 
 interface SearchItem {
     type: "file" | "alias";
@@ -32,13 +33,14 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     private excludedChipsComponent: ChipsComponent;
 
     constructor(
-        app: App
+        app: App,
+        private readonly settings: AliasPickerSettingsData
     ) {
         super(app);
 
         this.engine = new BacklinkEngine(app);
 
-        this.setPlaceholder("Search common backlink files. Type '+', '-', or search by alias or filename.");
+        this.setPlaceholder("Search common backlink files. Type '+', '*', or '-', or search by alias or filename.");
 
         const inputContainer = this.inputEl.parentElement?.parentElement;
         //class prompt-resuls
@@ -47,9 +49,9 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             throw new Error("Could not find input container or prompt results element.");
         }
 
-        this.includedFilesChipsComponent = this.createChipsContainer(inputContainer, promptResults);
-        this.exactChipsComponent = this.createChipsContainer(inputContainer, promptResults);
-        this.excludedChipsComponent = this.createExcludedChipsComponent(inputContainer, promptResults);
+        this.includedFilesChipsComponent = this.createChipsContainer(inputContainer, promptResults, "Referenced Files");
+        this.exactChipsComponent = this.createExactAliasChipsContainer(inputContainer, promptResults, "Referenced Aliases");
+        this.excludedChipsComponent = this.createExcludedChipsComponent(inputContainer, promptResults, "Excluded Backlink Files");
 
         this.setInstructions([
             {
@@ -95,9 +97,13 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         );
     }
 
-    private createChipsContainer(inputContainer: HTMLElement, promptResults: HTMLElement) {
+    private createChipsContainer(inputContainer: HTMLElement, promptResults: HTMLElement, name: string) {
         const chipsContainer = inputContainer.createDiv({
             cls: "backlink-search-chips-container"
+        });
+        chipsContainer.createDiv({
+            cls: "backlink-search-chips-title",
+            text: `${name}:`
         });
         inputContainer.insertBefore(chipsContainer, promptResults);
 
@@ -107,9 +113,29 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         );
     }
 
-    private createExcludedChipsComponent(inputContainer: HTMLElement, promptResults: HTMLElement) {
+    private createExactAliasChipsContainer(inputContainer: HTMLElement, promptResults: HTMLElement, name: string) {
+        const chipsContainer = inputContainer.createDiv({
+            cls: "backlink-search-chips-container"
+        });
+        chipsContainer.createDiv({
+            cls: "backlink-search-chips-title",
+            text: `${name}:`
+        });
+        inputContainer.insertBefore(chipsContainer, promptResults);
+
+        return new ChipsComponent(
+            chipsContainer,
+            (file) => this.removeExactAlias(file)
+        );
+    }
+
+    private createExcludedChipsComponent(inputContainer: HTMLElement, promptResults: HTMLElement, name: string) {
         const excludedChipsContainer = inputContainer.createDiv({
             cls: "backlink-search-chips-container backlink-search-chips-excluded"
+        });
+        excludedChipsContainer.createDiv({
+            cls: "backlink-search-chips-title",
+            text: `${name}:`
         });
         inputContainer.insertBefore(excludedChipsContainer, promptResults);
 
@@ -194,6 +220,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         // Refresh the suggestions in the modal
         super.onOpen();
         this.includedFilesChipsComponent.setSelectedFiles(this.selectedFiles);
+        this.exactChipsComponent.setSelectedFiles(this.exactBacklinksFileAliases);
         this.excludedChipsComponent.setSelectedFiles(this.excludedBacklinksFiles);
     }
 
@@ -205,14 +232,15 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 type: "file",
                 file
             });
-
-            const aliases = getAliasesForFile(this.app, file);
-            for (const alias of aliases) {
-                searchItems.push({
-                    type: "alias",
-                    file,
-                    alias
-                });
+            if (this.settings.includeAliasesInBacklinkSearchResults) {
+                const aliases = getAliasesForFile(this.app, file);
+                for (const alias of aliases) {
+                    searchItems.push({
+                        type: "alias",
+                        file,
+                        alias
+                    });
+                }
             }
         }
         return searchItems;
@@ -221,6 +249,13 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     private removeSelectedFile(fileToRemove: FilePickerItem): void {
         this.selectedFiles = this.selectedFiles.filter(
             fileItem => fileItem.file.path !== fileToRemove.file.path
+        );
+        void this.refresh();
+    }
+
+    private removeExactAlias(fileToRemove: FilePickerItem): void {
+        this.exactBacklinksFileAliases = this.exactBacklinksFileAliases.filter(
+            fileItem => fileItem.file.path !== fileToRemove.file.path || fileItem.alias !== fileToRemove.alias
         );
         void this.refresh();
     }
@@ -238,16 +273,18 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
     getItemText(item: SearchItem): string {
         if (item.type === "alias" && item.alias) {
-            return item.alias;
+            return item.alias + " (" + item.file.basename + ")";
         }
 
-        return [
-            item.file.basename,
-            item.file.path,
-            ...getAliasesForFile(this.app, item.file)
-        ]
-            .filter(Boolean)
-            .join(" ");
+        let text = item.file.basename;
+        if (item.file.path !== item.file.basename) {
+            text += ` (${item.file.path})`;
+        }
+        if (!this.settings.includeAliasesInBacklinkSearchResults) {
+            const aliases = getAliasesForFile(this.app, item.file);
+            text += aliases.length > 0 ? ` [${aliases.join(", ")}]` : "";
+        }
+        return text;
     }
 
     renderSuggestion(
@@ -268,12 +305,13 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             el.createDiv({
                 text: item.file.basename
             });
-
-            for (const alias of getAliasesForFile(this.app, item.file)) {
-                el.createDiv({
-                    cls: "search-suggestion-subtext",
-                    text: alias
-                });
+            if (!this.settings.includeAliasesInBacklinkSearchResults) {
+                for (const alias of getAliasesForFile(this.app, item.file)) {
+                    el.createDiv({
+                        cls: "search-suggestion-subtext",
+                        text: alias
+                    });
+                }
             }
         }
     }

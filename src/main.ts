@@ -163,7 +163,8 @@ export default class AliasPickerPlugin extends Plugin {
 			name: "Open Backlink Search",
 			callback: () => {
 				new BacklinkSearchModal(
-					this.app
+					this.app,
+					this.settings
 				).open();
 			}
 		});

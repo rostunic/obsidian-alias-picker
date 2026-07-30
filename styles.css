@@ -53,4 +53,8 @@ If your plugin does not need CSS, delete this file.
 .backlink-search-chips-excluded .backlink-search-chip-close:hover {
 	opacity: 1;
 }
+.search-suggestion-subtext {
+	font-size: var(--font-ui-smaller);
+	color: var(--text-muted);
+}
 

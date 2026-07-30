@@ -4,11 +4,13 @@ import AliasPickerPlugin from './main';
 export interface AliasPickerSettingsData {
 	overviewSplitSidebar: boolean;
 	overviewOpenNewLeaf: boolean;
+	includeAliasesInBacklinkSearchResults: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	overviewSplitSidebar: true,
 	overviewOpenNewLeaf: false,
+	includeAliasesInBacklinkSearchResults: false,
 };
 
 export class Settings extends PluginSettingTab {
@@ -54,6 +56,19 @@ export class Settings extends PluginSettingTab {
 					.onChange(async (value) => {
 						const currentSettings = this.plugin.getSettings();
 						currentSettings.overviewOpenNewLeaf = value;
+						await this.saveSettings(currentSettings);
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Include Aliases in Backlink Search Results')
+			.setDesc('Whether to include aliases in the backlink search results.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.getSettings().includeAliasesInBacklinkSearchResults)
+					.onChange(async (value) => {
+						const currentSettings = this.plugin.getSettings();
+						currentSettings.includeAliasesInBacklinkSearchResults = value;
 						await this.saveSettings(currentSettings);
 					})
 			);
