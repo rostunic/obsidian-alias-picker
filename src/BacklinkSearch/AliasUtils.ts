@@ -46,3 +46,12 @@ export function getAliasesAndBaseName(app: App, dest: TFile) {
     getAliasesForFile(app, dest).forEach(alias => aliases.add(alias));
     return aliases;
 }
+
+export function renameAliasInFrontmatter(app: App, file: TFile, oldAlias: string, newAlias: string) {
+    app.fileManager.processFrontMatter(file, (frontmatter) => {
+        const existingRaw = frontmatter?.aliases;
+        const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
+        const updatedAliases = existingAliases.map(a => a === oldAlias ? newAlias : a);
+        frontmatter.aliases = updatedAliases;
+    });
+}

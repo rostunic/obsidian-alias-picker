@@ -1,6 +1,7 @@
-import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu, App } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
+import { renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
 
 type AliasDetails = {
     alias: AliasKey;
@@ -396,7 +397,7 @@ export class AliasOverviewView extends ItemView {
         const headerEl = aliasEl.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
 
         const iconEl = this.createCollapseIcon(headerEl, !expanded);
-        headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
+        const treeItemInner = headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
         const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
         flairOuter.createEl('span', { cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
 
@@ -426,10 +427,63 @@ export class AliasOverviewView extends ItemView {
             this.saveExpandedState();
         });
 
+        // Context menu
+        this.setupAliasContextMenu(headerEl, alias, treeItemInner);
+
+
         // If expanded, render backlinks immediately
         if (expanded && aliasDetails && !isRendered) {
             isRendered = true;
             this.renderAliasBacklinks(aliasChildren, aliasDetails);
         }
+    }
+
+    private setupAliasContextMenu(headerEl: HTMLDivElement, alias: string, treeItemRootAliasName: HTMLDivElement) {
+        headerEl.addEventListener('contextmenu', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const menu = new Menu();
+            menu.addItem((item) => {
+                item.setTitle('Copy alias to clipboard');
+                item.onClick(() => {
+                    navigator.clipboard.writeText(alias).then(() => {
+                        new Notice(`Copied alias "${alias}" to clipboard`);
+                    }).catch((err) => {
+                        new Notice(`Failed to copy alias: ${err}`);
+                    }
+                    );
+                });
+            });
+            menu.addItem((item) => {
+                item.setTitle('Rename');
+                item.onClick(() => {
+                    treeItemRootAliasName.setText('');
+                    const inputEl = treeItemRootAliasName.createEl('input', { type: 'text', value: alias });
+                    inputEl.focus();
+                    inputEl.addEventListener('keydown', (event) => {
+                        if (event.key === 'Escape') {
+                            removeInput();
+                        }
+                        if (event.key === 'Enter') {
+                            const newAlias = inputEl.value.trim();
+                            if (newAlias && newAlias !== alias) {
+                                treeItemRootAliasName.setText(newAlias);
+                                renameAliasInFrontmatter(this.app, this.app.workspace.getActiveFile() as TFile, alias, newAlias);
+                            }
+                            inputEl.remove();
+                        }
+                    });
+                    inputEl.addEventListener('blur', () => {
+                        removeInput();
+                    });
+
+                    function removeInput() {
+                        treeItemRootAliasName.setText(alias);
+                        inputEl.remove();
+                    }
+                });
+            });
+            menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
+        });
     }
 }
