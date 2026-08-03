@@ -443,47 +443,55 @@ export class AliasOverviewView extends ItemView {
             ev.preventDefault();
             ev.stopPropagation();
             const menu = new Menu();
-            menu.addItem((item) => {
-                item.setTitle('Copy alias to clipboard');
-                item.onClick(() => {
-                    navigator.clipboard.writeText(alias).then(() => {
-                        new Notice(`Copied alias "${alias}" to clipboard`);
-                    }).catch((err) => {
-                        new Notice(`Failed to copy alias: ${err}`);
-                    }
-                    );
-                });
-            });
-            menu.addItem((item) => {
-                item.setTitle('Rename');
-                item.onClick(() => {
-                    treeItemRootAliasName.setText('');
-                    const inputEl = treeItemRootAliasName.createEl('input', { type: 'text', value: alias });
-                    inputEl.focus();
-                    inputEl.addEventListener('keydown', (event) => {
-                        if (event.key === 'Escape') {
-                            removeInput();
-                        }
-                        if (event.key === 'Enter') {
-                            const newAlias = inputEl.value.trim();
-                            if (newAlias && newAlias !== alias) {
-                                treeItemRootAliasName.setText(newAlias);
-                                renameAliasInFrontmatter(this.app, this.app.workspace.getActiveFile() as TFile, alias, newAlias);
-                            }
-                            inputEl.remove();
-                        }
-                    });
-                    inputEl.addEventListener('blur', () => {
-                        removeInput();
-                    });
+            this.setupAliasContextMenuCopyAlias(menu, alias);
+            this.setupAliasContextMenuRename(menu, treeItemRootAliasName, alias);
+            menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
+        });
+    }
 
-                    function removeInput() {
-                        treeItemRootAliasName.setText(alias);
+    private setupAliasContextMenuRename(menu: Menu, treeItemRootAliasName: HTMLDivElement, alias: string) {
+        menu.addItem((item) => {
+            item.setTitle('Rename');
+            item.onClick(() => {
+                treeItemRootAliasName.setText('');
+                const inputEl = treeItemRootAliasName.createEl('input', { type: 'text', value: alias });
+                inputEl.focus();
+                inputEl.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        removeInput();
+                    }
+                    if (event.key === 'Enter') {
+                        const newAlias = inputEl.value.trim();
+                        if (newAlias && newAlias !== alias) {
+                            treeItemRootAliasName.setText(newAlias);
+                            renameAliasInFrontmatter(this.app, this.app.workspace.getActiveFile() as TFile, alias, newAlias);
+                        }
                         inputEl.remove();
                     }
                 });
+                inputEl.addEventListener('blur', () => {
+                    removeInput();
+                });
+
+                function removeInput() {
+                    treeItemRootAliasName.setText(alias);
+                    inputEl.remove();
+                }
             });
-            menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
+        });
+    }
+
+    private setupAliasContextMenuCopyAlias(menu: Menu, alias: string) {
+        menu.addItem((item) => {
+            item.setTitle('Copy alias to clipboard');
+            item.onClick(() => {
+                navigator.clipboard.writeText(alias).then(() => {
+                    new Notice(`Copied alias "${alias}" to clipboard`);
+                }).catch((err) => {
+                    new Notice(`Failed to copy alias: ${err}`);
+                }
+                );
+            });
         });
     }
 }
