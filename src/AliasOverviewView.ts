@@ -1,7 +1,8 @@
 import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu, App } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
-import { renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
+import { getAllAliasEntries, moveAliasToOtherFileAsync, renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
+import { FilePickerModal } from './BacklinkSearch/FilePickerModal';
 
 type AliasDetails = {
     alias: AliasKey;
@@ -347,7 +348,7 @@ export class AliasOverviewView extends ItemView {
             const childrenRoot = searchResultContainer.createEl('div', { cls: 'search-results-children' });
 
             for (const alias of allAliases) {
-                this.renderAliasInRoot(alias, aliasCounts, childrenRoot);
+                this.renderAliasInRoot(file, alias, aliasCounts, childrenRoot);
             }
 
             const addButton = this.contentEl.createEl('button', { text: 'Add all known aliases to current file' });
@@ -388,7 +389,7 @@ export class AliasOverviewView extends ItemView {
         return alias.trim() as AliasKey;
     }
 
-    private renderAliasInRoot(alias: string, aliasCounts: Record<AliasKey, AliasDetails>, childrenRoot: HTMLDivElement) {
+    private renderAliasInRoot(file: TFile, alias: string, aliasCounts: Record<AliasKey, AliasDetails>, childrenRoot: HTMLDivElement) {
         const aliasKey = this.getAliasKey(alias);
         const aliasDetails = aliasCounts[aliasKey];
 
@@ -428,7 +429,7 @@ export class AliasOverviewView extends ItemView {
         });
 
         // Context menu
-        this.setupAliasContextMenu(headerEl, alias, treeItemInner);
+        this.setupAliasContextMenu(file, headerEl, alias, treeItemInner);
 
 
         // If expanded, render backlinks immediately
@@ -438,16 +439,18 @@ export class AliasOverviewView extends ItemView {
         }
     }
 
-    private setupAliasContextMenu(headerEl: HTMLDivElement, alias: string, treeItemRootAliasName: HTMLDivElement) {
+    private setupAliasContextMenu(file: TFile, headerEl: HTMLDivElement, alias: string, treeItemRootAliasName: HTMLDivElement) {
         headerEl.addEventListener('contextmenu', (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
             const menu = new Menu();
             this.setupAliasContextMenuCopyAlias(menu, alias);
             this.setupAliasContextMenuRename(menu, treeItemRootAliasName, alias);
+            this.setupAliasContextMenuMoveAliasToOtherFile(menu, alias, file);
             menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
         });
     }
+
 
     private setupAliasContextMenuRename(menu: Menu, treeItemRootAliasName: HTMLDivElement, alias: string) {
         menu.addItem((item) => {
@@ -491,6 +494,24 @@ export class AliasOverviewView extends ItemView {
                     new Notice(`Failed to copy alias: ${err}`);
                 }
                 );
+            });
+        });
+    }
+
+    private setupAliasContextMenuMoveAliasToOtherFile(menu: Menu, alias: string, file: TFile) {
+        menu.addItem((item) => {
+            item.setTitle('Move alias to another file');
+            item.onClick(() => {
+                const allFiles = this.app.vault.getFiles();
+                const aliasEntries = getAllAliasEntries(this.app, allFiles, true);
+                const filePicker = new FilePickerModal(this.app, aliasEntries, (filePickerItem) => {
+                    if (filePickerItem.file) {
+                        moveAliasToOtherFileAsync(this.app, file, filePickerItem.file, alias);
+                    }
+                })
+                filePicker.setTitle(`Move alias "${alias}" to another file`);
+                filePicker.setPlaceholder(`Search for the target file of alias "${alias}..."`);
+                filePicker.open();
             });
         });
     }

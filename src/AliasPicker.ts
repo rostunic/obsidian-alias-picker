@@ -24,7 +24,7 @@ export class AliasPicker extends FuzzySuggestModal<string> {
 		this.editor.setCursor(newPosition);
 	}
 
-	public static generateLinkWithAlias(app: App, file: TFile, alias: string, oldLink: LinkCache) {
+	public static generateLinkWithAlias(app: App, file: TFile, alias: string, oldLink: LinkCache): string {
 		const parsed = parseLinktext(oldLink.original);
 		return app.fileManager.generateMarkdownLink(file, parsed.path, parsed.subpath.replace(/\)+$/, ''), alias);
 	}

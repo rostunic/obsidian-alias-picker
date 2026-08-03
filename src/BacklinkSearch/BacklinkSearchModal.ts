@@ -233,7 +233,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 file
             });
             if (this.settings.includeAliasesInBacklinkSearchResults) {
-                const aliases = getAliasesForFile(this.app, file);
+                const aliases = getAliasesForFile(this.app, file, true);
                 for (const alias of aliases) {
                     searchItems.push({
                         type: "alias",
@@ -281,7 +281,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             text += ` (${item.file.path})`;
         }
         if (!this.settings.includeAliasesInBacklinkSearchResults) {
-            const aliases = getAliasesForFile(this.app, item.file);
+            const aliases = getAliasesForFile(this.app, item.file, true);
             text += aliases.length > 0 ? ` [${aliases.join(", ")}]` : "";
         }
         return text;
@@ -306,7 +306,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 text: item.file.basename
             });
             if (!this.settings.includeAliasesInBacklinkSearchResults) {
-                for (const alias of getAliasesForFile(this.app, item.file)) {
+                for (const alias of getAliasesForFile(this.app, item.file, true)) {
                     el.createDiv({
                         cls: "search-suggestion-subtext",
                         text: alias

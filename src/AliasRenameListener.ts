@@ -2,6 +2,7 @@ import { App, TAbstractFile, TFile, Notice } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { AliasPicker } from './AliasPicker';
 import { getBacklinksArray, normalizeAliases } from './utilities';
+import { renameAliasesInBacklinksAsync } from './BacklinkSearch/AliasUtils';
 
 export class AliasRenameListener {
     private pendingTimers: Map<string, number> = new Map();
@@ -61,29 +62,7 @@ export class AliasRenameListener {
             const oldAlias = removedAliases[0];
             const newAlias = addedAliases[0];
 
-            const backlinksArray = getBacklinksArray(this.app, file);
-            const backlinks = backlinksArray
-                .map(([path, links]) => ({ path, links: links.filter(link => link.displayText === oldAlias) }))
-                .filter(x => x.links.length > 0);
-
-            for (const backlink of backlinks) {
-                const backlinkFile = this.app.vault.getFileByPath(backlink.path);
-                if (!backlinkFile) continue;
-
-                const fileContent = await this.app.vault.cachedRead(backlinkFile);
-                const newContent = backlink.links.reduce((content, link) => {
-                    const oldText = link.original;
-                    const newText = AliasPicker.generateLinkWithAlias(this.app, file, newAlias, link);
-                    return content.replace(oldText, newText);
-                }, fileContent);
-
-                if (newContent !== fileContent) {
-                    await this.app.vault.modify(backlinkFile, newContent);
-                    new Notice(`Renamed alias in ${backlinkFile.path}`);
-                }
-            }
-
-            new Notice(`Renamed alias "${oldAlias}" to "${newAlias}" in ${backlinks.length} files`);
+            await renameAliasesInBacklinksAsync(this.app, file, oldAlias, newAlias);
         }
 
         // Always keep cache in sync (including removals).
