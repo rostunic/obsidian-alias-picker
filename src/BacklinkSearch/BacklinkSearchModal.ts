@@ -21,12 +21,18 @@ interface SearchItem {
     alias?: string;
 }
 
+
+
 export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
+    private static lastSelectedFiles: FilePickerItem[] = [];
+    private static lastExactBacklinksFileAliases: FilePickerItem[] = [];
+    private static lastExcludedBacklinksFiles: FilePickerItem[] = []; 
+
     private readonly engine: BacklinkEngine;
-    private selectedFiles: FilePickerItem[] = [];
-    private exactBacklinksFileAliases: FilePickerItem[] = [];
-    private excludedBacklinksFiles: FilePickerItem[] = [];
+    private selectedFiles: FilePickerItem[];
+    private exactBacklinksFileAliases: FilePickerItem[];
+    private excludedBacklinksFiles: FilePickerItem[];
     private items: SearchItem[] = [];
     private includedFilesChipsComponent: ChipsComponent;
     private exactChipsComponent: ChipsComponent;
@@ -37,6 +43,10 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         private readonly settings: AliasPickerSettingsData
     ) {
         super(app);
+        const useLastState = this.settings.rememberLastFilteredFilesAndAliases;
+        this.excludedBacklinksFiles = useLastState ? BacklinkSearchModal.lastExcludedBacklinksFiles : [];
+        this.exactBacklinksFileAliases = useLastState ? BacklinkSearchModal.lastExactBacklinksFileAliases : [];
+        this.selectedFiles = useLastState ? BacklinkSearchModal.lastSelectedFiles : [];
 
         this.engine = new BacklinkEngine(app);
 
@@ -95,6 +105,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 }
             }
         );
+        this.refresh();
     }
 
     private createChipsContainer(inputContainer: HTMLElement, promptResults: HTMLElement, name: string) {
@@ -146,6 +157,9 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     }
 
     async onClose(): Promise<void> {
+        BacklinkSearchModal.lastSelectedFiles = this.selectedFiles;
+        BacklinkSearchModal.lastExactBacklinksFileAliases = this.exactBacklinksFileAliases;
+        BacklinkSearchModal.lastExcludedBacklinksFiles = this.excludedBacklinksFiles;
         super.onClose();
     }
 

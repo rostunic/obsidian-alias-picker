@@ -5,12 +5,14 @@ export interface AliasPickerSettingsData {
 	overviewSplitSidebar: boolean;
 	overviewOpenNewLeaf: boolean;
 	includeAliasesInBacklinkSearchResults: boolean;
+	rememberLastFilteredFilesAndAliases: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	overviewSplitSidebar: true,
 	overviewOpenNewLeaf: false,
 	includeAliasesInBacklinkSearchResults: false,
+	rememberLastFilteredFilesAndAliases: false
 };
 
 export class Settings extends PluginSettingTab {
@@ -69,6 +71,19 @@ export class Settings extends PluginSettingTab {
 					.onChange(async (value) => {
 						const currentSettings = this.plugin.getSettings();
 						currentSettings.includeAliasesInBacklinkSearchResults = value;
+						await this.saveSettings(currentSettings);
+					})
+			);
+		
+		new Setting(containerEl)
+			.setName('Remember last filtered files and aliases in backlink search')
+			.setDesc('Whether to remember the last filtered files and aliases in the backlink search modal.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.getSettings().rememberLastFilteredFilesAndAliases)
+					.onChange(async (value) => {
+						const currentSettings = this.plugin.getSettings();
+						currentSettings.rememberLastFilteredFilesAndAliases = value;
 						await this.saveSettings(currentSettings);
 					})
 			);
