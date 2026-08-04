@@ -41,13 +41,15 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
     constructor(
         app: App,
-        private readonly settings: AliasPickerSettingsData
+        private readonly settings: AliasPickerSettingsData,
+        exactBacklinksFileAliases?: FilePickerItem[],
+        selectedFiles?: FilePickerItem[],
     ) {
         super(app);
-        const useLastState = this.settings.rememberLastFilteredFilesAndAliases;
+        const useLastState = !exactBacklinksFileAliases && !selectedFiles && this.settings.rememberLastFilteredFilesAndAliases;
         this.excludedBacklinksFiles = useLastState ? BacklinkSearchModal.lastExcludedBacklinksFiles : [];
-        this.exactBacklinksFileAliases = useLastState ? BacklinkSearchModal.lastExactBacklinksFileAliases : [];
-        this.selectedFiles = useLastState ? BacklinkSearchModal.lastSelectedFiles : [];
+        this.exactBacklinksFileAliases = exactBacklinksFileAliases ?? (useLastState ? BacklinkSearchModal.lastExactBacklinksFileAliases : []);
+        this.selectedFiles = selectedFiles ?? (useLastState ? BacklinkSearchModal.lastSelectedFiles : []);
 
         this.engine = new BacklinkEngine(app);
 

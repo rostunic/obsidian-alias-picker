@@ -33,6 +33,7 @@ The Alias Overview provides a context menu (right-click) on alias entries with t
 - **Rename**: Rename an alias directly from the overview
 - **Copy to Clipboard**: Copy the alias text to clipboard
 - **Move Alias to Other File**: Move an alias from its current file to another file. This is useful if you realize that an alias corresponds to another concept and should be moved to a different file. The backlinks to the alias will be updated automatically.
+- **Open in Backlink Search as exact alias**: Opens the Backlink Search modal with the selected alias as an exact match, allowing you to find all files that reference this alias and filter the results further. 
 
 ## Open Backlink Search
 

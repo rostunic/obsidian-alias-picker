@@ -21,12 +21,12 @@ type Context = {
 export default class AliasPickerPlugin extends Plugin {
 	private aliasCache: AliasCache = new AliasCache();
 	private aliasRenameListener: AliasRenameListener = new AliasRenameListener(this.app, this.aliasCache);
-	private settings: AliasPickerSettingsData = DEFAULT_SETTINGS;
+	public settings: AliasPickerSettingsData = DEFAULT_SETTINGS;
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new Settings(this.app, this));
-		this.registerView(AliasOverviewView.Type, (leaf) => new AliasOverviewView(leaf, this.aliasCache));
+		this.registerView(AliasOverviewView.Type, (leaf) => new AliasOverviewView(leaf, this.aliasCache, this));
 
 		this.aliasRenameListener.startListening();
 		this.addCommand({

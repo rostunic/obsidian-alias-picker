@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.9] - 2026-08-04
+### Added
+- New context menu item in Alias Overview:  **Open in Backlink Search as exact alias**: Opens the Backlink Search modal with the selected alias as an exact match, allowing you to find all files that reference this alias and filter the results further. 
+
+
 ## [1.0.8] - 2026-08-04
 
 ### Added

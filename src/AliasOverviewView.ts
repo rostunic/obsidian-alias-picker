@@ -2,7 +2,9 @@ import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu, 
 import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
 import { getAllAliasEntries, moveAliasToOtherFileAsync, renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
-import { FilePickerModal } from './BacklinkSearch/FilePickerModal';
+import { FilePickerItem, FilePickerModal } from './BacklinkSearch/FilePickerModal';
+import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
+import AliasPickerPlugin from './main';
 
 type AliasDetails = {
     alias: AliasKey;
@@ -69,7 +71,7 @@ export class AliasOverviewView extends ItemView {
         return 'list-tree';
     }
 
-    constructor(leaf: WorkspaceLeaf, private aliasCache: AliasCache) {
+    constructor(leaf: WorkspaceLeaf, private aliasCache: AliasCache, private plugin: AliasPickerPlugin) {
         super(leaf);
     }
 
@@ -447,6 +449,7 @@ export class AliasOverviewView extends ItemView {
             this.setupAliasContextMenuCopyAlias(menu, alias);
             this.setupAliasContextMenuRename(menu, treeItemRootAliasName, alias);
             this.setupAliasContextMenuMoveAliasToOtherFile(menu, alias, file);
+            this.setupAliasContextMenuOpenInBacklinkSearch(menu, alias, file);
             menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
         });
     }
@@ -512,6 +515,16 @@ export class AliasOverviewView extends ItemView {
                 filePicker.setTitle(`Move alias "${alias}" to another file`);
                 filePicker.setPlaceholder(`Search for the target file of alias "${alias}..."`);
                 filePicker.open();
+            });
+        });
+    }
+    private setupAliasContextMenuOpenInBacklinkSearch(menu: Menu, alias: string, file: TFile) {
+        menu.addItem((item) => {
+            item.setTitle('Open in Backlink Search as exact alias');
+            item.onClick(() => {
+                const filePickerItem: FilePickerItem = { file, alias, displayText: alias };
+                const backlinkSearchModal = new BacklinkSearchModal(this.app, this.plugin.settings, [filePickerItem]);
+                backlinkSearchModal.open();
             });
         });
     }
