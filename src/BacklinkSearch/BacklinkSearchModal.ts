@@ -6,7 +6,8 @@ import {
     FuzzyMatch,
     TFile,
     Notice,
-    Platform
+    Platform,
+    MarkdownView
 } from "obsidian";
 
 import { BacklinkEngine } from "./BacklinkEngine";
@@ -27,7 +28,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
     private static lastSelectedFiles: FilePickerItem[] = [];
     private static lastExactBacklinksFileAliases: FilePickerItem[] = [];
-    private static lastExcludedBacklinksFiles: FilePickerItem[] = []; 
+    private static lastExcludedBacklinksFiles: FilePickerItem[] = [];
 
     private readonly engine: BacklinkEngine;
     private selectedFiles: FilePickerItem[];
@@ -330,10 +331,34 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         }
     }
 
-    onChooseItem(item: SearchItem): void {
-        void this.app.workspace
+    async onChooseItem(item: SearchItem): Promise<void> {
+        const openTask = this.app.workspace
             .getLeaf()
             .openFile(item.file);
+        if (this.settings.focusFirstBacklinkSearchResultOnOpen) {
+            await openTask;
+            const openedFile = item.file;
+            const outgoingLinks = this.app.metadataCache.getFileCache(openedFile)?.links ?? [];
+            // find first match in this.selectedFiles or this.exactBacklinksFileAliases
+            const firstMatch = outgoingLinks.find(link => {
+                const linkedFile = this.app.metadataCache.getFirstLinkpathDest(link.link, openedFile.path);
+                return this.exactBacklinksFileAliases.some(
+                    fileItem => linkedFile?.path === fileItem.file.path && link.displayText === fileItem.alias)
+                    || this.selectedFiles.some(fileItem => linkedFile?.path === fileItem.file.path);
+            }
+            );
+            // if found, focus the first match
+            if (firstMatch) {
+                const leaf = this.app.workspace.getLeaf(false);
+                // set focus at link position in the opened file
+                // const editor = leaf.view.sourceMode.cmEditor; // Property 'sourceMode' does not exist on type 'View'.
+                if (leaf.view instanceof MarkdownView) {
+                    const editor = leaf.view.editor;
+                    editor.setCursor({ line: firstMatch.position.start.line, ch: firstMatch.position.start.col });
+                    editor.scrollIntoView({ from: { line: firstMatch.position.start.line, ch: firstMatch.position.start.col }, to: { line: firstMatch.position.end.line, ch: firstMatch.position.end.col } }, true);
+                }
+            }
+        }
     }
 
     private async copyResultsToClipboard(): Promise<void> {

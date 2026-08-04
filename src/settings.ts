@@ -6,13 +6,15 @@ export interface AliasPickerSettingsData {
 	overviewOpenNewLeaf: boolean;
 	includeAliasesInBacklinkSearchResults: boolean;
 	rememberLastFilteredFilesAndAliases: boolean;
+	focusFirstBacklinkSearchResultOnOpen: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	overviewSplitSidebar: true,
 	overviewOpenNewLeaf: false,
 	includeAliasesInBacklinkSearchResults: false,
-	rememberLastFilteredFilesAndAliases: false
+	rememberLastFilteredFilesAndAliases: false,
+	focusFirstBacklinkSearchResultOnOpen: true,
 };
 
 export class Settings extends PluginSettingTab {
@@ -84,6 +86,19 @@ export class Settings extends PluginSettingTab {
 					.onChange(async (value) => {
 						const currentSettings = this.plugin.getSettings();
 						currentSettings.rememberLastFilteredFilesAndAliases = value;
+						await this.saveSettings(currentSettings);
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Focus first backlink search result on open')
+			.setDesc('Whether to focus the first backlink, when opening a file using the backlink search modal.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.getSettings().focusFirstBacklinkSearchResultOnOpen)
+					.onChange(async (value) => {
+						const currentSettings = this.plugin.getSettings();
+						currentSettings.focusFirstBacklinkSearchResultOnOpen = value;
 						await this.saveSettings(currentSettings);
 					})
 			);

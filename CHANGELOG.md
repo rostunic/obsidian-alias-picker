@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.8] - 2026-08-04
+
+### Added
+- **Focus first backlink search result on open**: When opening a file from the backlink search modal, the cursor is now automatically positioned at the first backlink match. This setting can be toggled in the plugin settings (default: true).
+
 ## [1.0.7] - 2026-08-03
 
 ### Added

@@ -1,6 +1,9 @@
 # Alias Picker
+
 The Alias Picker plugin for Obsidian introduces two commands: 'Pick alias' and 'Pick block'.
 These commands simplify the process of modifying wiki or Markdown links within your notes.
+
+For a complete changelog, see the [CHANGELOG.md](CHANGELOG.md).
 
 ## Features:
 - **Pick alias**: Easily select an alternative alias for the current link from the available aliases for the file.
@@ -47,5 +50,6 @@ The plugin provides the following settings in Obsidian's plugin settings tab:
 
 - **Include Aliases in Backlink Search Results**: Controls whether aliases are included in backlink search results (default: false)
 - **Remember last filtered files and aliases in backlink search**: Controls whether the last filtered files and aliases are remembered in the backlink search modal (default: false)
+- **Focus first backlink search result on open**: When opening a file from the backlink search modal, the cursor is automatically positioned at the first backlink match (default: true)
 - **Split Sidebar for Alias Overview**: Controls whether the sidebar splits when opening the Alias Overview (default: true)
 - **Open New Leaf for Alias Overview**: Controls whether a new leaf is created or an existing one is reused (default: true)
