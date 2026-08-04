@@ -3,7 +3,7 @@
 	"name": "Alias Picker",
 	"version": "1.0.8",
 	"minAppVersion": "1.5.12",
-	"description": "Pick aliases or blocks of links.",
+	"description": "Pick aliases or blocks of links. Automatic update backlinks when renaming aliases. Backlink search for multiple files and exact aliases. Alias overview to see alias backlinks. Your alias management companion.",
 	"author": "rostunic",
 	"authorUrl": "https://github.com/rostunic",
 	"isDesktopOnly": false
