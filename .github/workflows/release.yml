@@ -23,6 +23,7 @@ jobs:
           npm run build
 
       - name: Create release
+        uses: CSchoel/release-notes-from-changelog@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -31,4 +32,5 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --draft \
+            -F RELEASE.md
             main.js manifest.json styles.css
