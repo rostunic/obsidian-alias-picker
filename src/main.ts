@@ -31,7 +31,7 @@ export default class AliasPickerPlugin extends Plugin {
 		this.aliasRenameListener.startListening();
 		this.addCommand({
 			id: 'open-alias-overview',
-			name: 'Open Alias Overview',
+			name: 'Open alias overview',
 			callback: () => {
 				this.app.workspace.rightSplit.expand();
 
@@ -40,7 +40,7 @@ export default class AliasPickerPlugin extends Plugin {
 					const existingLeaf = this.findAliasOverviewLeaf();
 					if (existingLeaf) {
 						// Reuse existing leaf
-						existingLeaf.setViewState({
+						void existingLeaf.setViewState({
 							type: AliasOverviewView.Type,
 							active: true,
 						});
@@ -55,7 +55,7 @@ export default class AliasPickerPlugin extends Plugin {
 					console.error('Failed to create new leaf for Alias Overview');
 					return;
 				}
-				newLeaf?.setViewState({
+				void newLeaf?.setViewState({
 					type: AliasOverviewView.Type,
 					active: true,
 				});
@@ -126,7 +126,7 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!checking) {
 					const allowedBlocks = Object.values(blocks);
 					if (allowedBlocks.length === 0) return;
-					this.pickBlock(context, allowedBlocks);
+					void this.pickBlock(context, allowedBlocks);
 				}
 
 				return true;
@@ -143,7 +143,7 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!checking) {
 					const aliases = getKnownFileAliases(this.app, currentFile);
 
-					this.app.fileManager.processFrontMatter(currentFile, async (frontmatter) => {
+					void this.app.fileManager.processFrontMatter(currentFile, (frontmatter) => {
 						const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
 						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
 						if (newAliases.length === 0) {

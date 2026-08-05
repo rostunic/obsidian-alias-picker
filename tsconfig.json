@@ -2,11 +2,11 @@
 	"compilerOptions": {
 		"inlineSourceMap": true,
 		"inlineSources": true,
-		"module": "nodenext",
+		"module": "esnext",
 		"target": "ES6",
 		"allowJs": true,
 		"noImplicitAny": true,
-		"moduleResolution": "nodenext",
+		"moduleResolution": "bundler",
 		"importHelpers": true,
 		"isolatedModules": true,
 		"forceConsistentCasingInFileNames": true,
