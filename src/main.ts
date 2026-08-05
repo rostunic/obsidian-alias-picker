@@ -8,6 +8,7 @@ import { getKnownFileAliases, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
 import { Settings, AliasPickerSettingsData, DEFAULT_SETTINGS } from './settings';
 import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
+import { ObsidianFrontmatter } from './obsidian';
 
 type Context = {
 
@@ -143,7 +144,7 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!checking) {
 					const aliases = getKnownFileAliases(this.app, currentFile);
 
-					void this.app.fileManager.processFrontMatter(currentFile, (frontmatter) => {
+					void this.app.fileManager.processFrontMatter(currentFile, (frontmatter: ObsidianFrontmatter) => {
 						const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
 						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
 						if (newAliases.length === 0) {
@@ -160,7 +161,7 @@ export default class AliasPickerPlugin extends Plugin {
 
 		this.addCommand({
 			id: "open-backlink-search",
-			name: "Open Backlink Search",
+			name: "Open backlink search",
 			callback: () => {
 				new BacklinkSearchModal(
 					this.app,
@@ -213,7 +214,8 @@ export default class AliasPickerPlugin extends Plugin {
 	}
 
 	private async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadedData = await this.loadData() as AliasPickerSettingsData | null;
+		this.settings = { ...DEFAULT_SETTINGS, ...loadedData };
 	}
 
 	public getSettings(): AliasPickerSettingsData {

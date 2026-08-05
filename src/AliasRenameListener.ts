@@ -1,7 +1,6 @@
-import { App, TAbstractFile, TFile, Notice } from 'obsidian';
+import { App, TAbstractFile, TFile } from 'obsidian';
 import { AliasCache } from './AliasCache';
-import { AliasPicker } from './AliasPicker';
-import { getBacklinksArray, normalizeAliases } from './utilities';
+import { normalizeAliases } from './utilities';
 import { renameAliasesInBacklinksAsync } from './BacklinkSearch/AliasUtils';
 
 export class AliasRenameListener {
@@ -37,7 +36,7 @@ export class AliasRenameListener {
         (this.app.vault as unknown as { on: (name: string, cb: (...args: unknown[]) => unknown) => void }).on('delete', this.onFileDeleted as (...data: unknown[]) => unknown);
     }
     public stopListening() {
-        this.app.metadataCache.off('resolved', this.onMetadataResolved as (...data: unknown[]) => unknown);
+        this.app.metadataCache.off('resolved', this.onMetadataResolved);
         this.app.metadataCache.off('changed', this.onMetadataChanged as (...data: unknown[]) => unknown);
         (this.app.vault as unknown as { off: (name: string, cb: (...args: unknown[]) => unknown) => void }).off('rename', this.onFileRenamed as (...data: unknown[]) => unknown);
         (this.app.vault as unknown as { off: (name: string, cb: (...args: unknown[]) => unknown) => void }).off('delete', this.onFileDeleted as (...data: unknown[]) => unknown);

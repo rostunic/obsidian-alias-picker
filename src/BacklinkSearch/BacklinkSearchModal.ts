@@ -87,7 +87,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     }
 
     async onOpen(): Promise<void> {
-        super.onOpen();
+        await super.onOpen();
 
         this.inputEl.addEventListener(
             "input",
@@ -98,17 +98,17 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
 
         this.inputEl.addEventListener(
             "keydown",
-            async (e) => {
+            (e) => {
                 if (
                     (Platform.isMacOS ? e.metaKey : e.ctrlKey) &&
                     e.key === "c"
                 ) {
                     e.preventDefault();
-                    await this.copyResultsToClipboard();
+                    void this.copyResultsToClipboard();
                 }
             }
         );
-        this.refresh();
+        await this.refresh();
     }
 
     private createChipsContainer(inputContainer: HTMLElement, promptResults: HTMLElement, name: string) {
@@ -159,7 +159,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         );
     }
 
-    async onClose(): Promise<void> {
+    onClose() {
         BacklinkSearchModal.lastSelectedFiles = this.selectedFiles;
         BacklinkSearchModal.lastExactBacklinksFileAliases = this.exactBacklinksFileAliases;
         BacklinkSearchModal.lastExcludedBacklinksFiles = this.excludedBacklinksFiles;
@@ -235,7 +235,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         this.items = this.filesToSearchItems(filteredFiles);
 
         // Refresh the suggestions in the modal
-        super.onOpen();
+        await super.onOpen();
         this.includedFilesChipsComponent.setSelectedFiles(this.selectedFiles);
         this.exactChipsComponent.setSelectedFiles(this.exactBacklinksFileAliases);
         this.excludedChipsComponent.setSelectedFiles(this.excludedBacklinksFiles);
@@ -333,7 +333,11 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         }
     }
 
-    async onChooseItem(item: SearchItem): Promise<void> {
+    onChooseItem(item: SearchItem) {
+        void this.openFileAndFocusBacklink(item);
+    }
+
+    private async openFileAndFocusBacklink(item: SearchItem) {
         const openTask = this.app.workspace
             .getLeaf()
             .openFile(item.file);
@@ -372,16 +376,15 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             new Map(files.map(f => [f.path, f])).values()
         );
 
-        const links = await Promise.all(
-            uniqueFiles.map(async (file) => {
-                const link = this.app.fileManager.generateMarkdownLink(
-                    file,
-                    this.app.workspace.getActiveFile()?.path ?? "",
-                    "",
-                    file.basename
-                );
-                return link;
-            })
+        const links = uniqueFiles.map(file => {
+            const link = this.app.fileManager.generateMarkdownLink(
+                file,
+                this.app.workspace.getActiveFile()?.path ?? "",
+                "",
+                file.basename
+            );
+            return link;
+        }
         );
 
         await navigator.clipboard.writeText(links.join("\n"));

@@ -17,9 +17,9 @@ export function getBacklinksArray(app: App, file: TFile) {
 	// Prefer Obsidian's internal backlinks API if available, but it is not stable across versions.
 	// In some builds it can throw at runtime, so we must fall back to a public-API-based approach.
 	try {
-		const getBacklinksForFile = (app.metadataCache as AdvancedMetadataCache).getBacklinksForFile;
-		if (typeof getBacklinksForFile === 'function') {
-			const backlinksObject = (app.metadataCache as AdvancedMetadataCache).getBacklinksForFile(file);
+		const metadataCache = app.metadataCache as AdvancedMetadataCache;
+		if (typeof metadataCache.getBacklinksForFile === 'function') {
+			const backlinksObject = metadataCache.getBacklinksForFile(file);
 			if (backlinksObject?.data) return Array.from(backlinksObject.data.entries());
 		}
 	} catch {

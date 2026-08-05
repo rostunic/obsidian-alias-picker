@@ -5,6 +5,7 @@ import { getAllAliasEntries, moveAliasToOtherFileAsync, renameAliasInFrontmatter
 import { FilePickerItem, FilePickerModal } from './BacklinkSearch/FilePickerModal';
 import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
 import AliasPickerPlugin from './main';
+import { ObsidianFrontmatter } from './obsidian';
 
 type AliasDetails = {
     alias: AliasKey;
@@ -64,7 +65,7 @@ export class AliasOverviewView extends ItemView {
     }
 
     override getDisplayText(): string {
-        return 'Alias Overview';
+        return 'Alias overview';
     }
 
     override getIcon(): string {
@@ -75,14 +76,16 @@ export class AliasOverviewView extends ItemView {
         super(leaf);
     }
 
-    override async onOpen() {
+    override  async onOpen() {
         this.registerRefreshEventsOnce();
         this.scheduleRefresh(0);
+        await super.onOpen();
     }
 
     override async onClose() {
         this.clearRefreshTimeout();
         this.contentEl.empty();
+        await super.onClose();
     }
 
     private clearRefreshTimeout() {
@@ -96,7 +99,7 @@ export class AliasOverviewView extends ItemView {
         this.clearRefreshTimeout();
         this.refreshTimeoutId = window.setTimeout(() => {
             this.refreshTimeoutId = null;
-            void this.refresh();
+            this.refresh();
         }, delayMs);
     }
 
@@ -171,8 +174,8 @@ export class AliasOverviewView extends ItemView {
             const line0 = link.position?.start?.line;
             const lineNo = typeof line0 === 'number' ? line0 + 1 : null;
 
-            const matchEl = matchesEl.createEl('div', { cls: 'search-result-file-match is-clickable' });
-            const lineEl = matchEl.createEl('div', { cls: 'search-result-file-match-line' });
+            const matchEl = matchesEl.createDiv({ cls: 'search-result-file-match is-clickable' });
+            const lineEl = matchEl.createDiv({ cls: 'search-result-file-match-line' });
             if (lineNo) lineEl.appendText(`${lineNo}: `);
 
             const startOffset = link.position?.start?.offset;
@@ -187,7 +190,7 @@ export class AliasOverviewView extends ItemView {
                 const after = normalize(content.slice(endOffset, to));
 
                 if (before.length) lineEl.appendText(before + ' ');
-                const highlightEl = lineEl.createEl('span', { cls: 'search-result-file-matched-text' });
+                const highlightEl = lineEl.createSpan({ cls: 'search-result-file-matched-text' });
                 highlightEl.setText(matched.length ? matched : link.original);
                 if (after.length) lineEl.appendText(' ' + after);
             } else {
@@ -202,9 +205,10 @@ export class AliasOverviewView extends ItemView {
             }
 
             if (group.file) {
-                matchEl.addEventListener('click', async (ev) => {
+                matchEl.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    await this.openFileAt(group.file as TFile, link);
+                    if(!group.file) return;
+                    void this.openFileAt(group.file, link);
                 });
             }
         }
@@ -217,15 +221,15 @@ export class AliasOverviewView extends ItemView {
     private renderBacklinkGroup(parent: HTMLElement, group: BacklinkGroup, aliasKey: AliasKey) {
         const groupKey = this.getBacklinkGroupKey(aliasKey, group);
         const expanded = this.expandedBacklinks.has(groupKey);
-        const groupContainer = parent.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
-        const headerEl = groupContainer.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
+        const groupContainer = parent.createDiv({ cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
+        const headerEl = groupContainer.createDiv({ cls: 'tree-item-self search-result-file-title is-clickable' });
 
         const iconEl = this.createCollapseIcon(headerEl, !expanded);
-        const innerEl = headerEl.createEl('div', { cls: 'tree-item-inner', text: group.file?.basename ?? group.path });
-        const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
-        flairOuter.createEl('span', { cls: 'tree-item-flair', text: group.links.length.toString() });
+        const innerEl = headerEl.createDiv({ cls: 'tree-item-inner', text: group.file?.basename ?? group.path });
+        const flairOuter = headerEl.createDiv({ cls: 'tree-item-flair-outer' });
+        flairOuter.createSpan({ cls: 'tree-item-flair', text: group.links.length.toString() });
 
-        const matchesEl = groupContainer.createEl('div', { cls: 'search-results-children' });
+        const matchesEl = groupContainer.createDiv({ cls: 'search-results-children' });
         this.setCollapsedState(groupContainer, iconEl, matchesEl, !expanded);
 
         let matchesRendered = false;
@@ -252,10 +256,10 @@ export class AliasOverviewView extends ItemView {
         });
 
         // Clicking the filename navigates to the source file (like core backlinks).
-        innerEl.addEventListener('click', async (ev) => {
+        innerEl.addEventListener('click', (ev) => {
             ev.stopPropagation();
             if (!group.file) return;
-            await this.openFileAt(group.file, group.links[0]);
+            void this.openFileAt(group.file, group.links[0]);
         });
 
         // Default click on the header (outside the icon/text) toggles as well.
@@ -284,7 +288,7 @@ export class AliasOverviewView extends ItemView {
             .sort((a, b) => b.links.length - a.links.length);
 
         if (groups.length === 0) {
-            parent.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
+            parent.createDiv({ cls: 'search-empty-state', text: 'No backlinks found.' });
             return;
         }
 
@@ -293,7 +297,7 @@ export class AliasOverviewView extends ItemView {
         }
     }
 
-    private async refresh() {
+    private refresh() {
         if (this.refreshInProgress) {
             this.refreshRequested = true;
             return;
@@ -346,17 +350,17 @@ export class AliasOverviewView extends ItemView {
                 return;
             }
 
-            const searchResultContainer = this.contentEl.createEl('div', { cls: 'search-result-container' });
-            const childrenRoot = searchResultContainer.createEl('div', { cls: 'search-results-children' });
+            const searchResultContainer = this.contentEl.createDiv({ cls: 'search-result-container' });
+            const childrenRoot = searchResultContainer.createDiv({ cls: 'search-results-children' });
 
             for (const alias of allAliases) {
                 this.renderAliasInRoot(file, alias, aliasCounts, childrenRoot);
             }
 
-            const addButton = this.contentEl.createEl('button', { text: 'Add all known aliases to current file' });
+            const addButton = this.contentEl.createEl('button', { cls: 'button', text: 'Add all known aliases to current file' });
             addButton.addEventListener('click', () => {
                 const aliases = getKnownFileAliases(this.app, file);
-                this.app.fileManager.processFrontMatter(file, async (frontmatter) => {
+                void this.app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
                     const existingRaw = frontmatter?.aliases;
                     const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
                     const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
@@ -370,7 +374,7 @@ export class AliasOverviewView extends ItemView {
             });
 
             // Restore scroll position after rendering
-            requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
                 scrollContainer.scrollTop = scrollTopBefore;
             });
 
@@ -396,15 +400,15 @@ export class AliasOverviewView extends ItemView {
         const aliasDetails = aliasCounts[aliasKey];
 
         const expanded = this.expandedAliases.has(aliasKey);
-        const aliasEl = childrenRoot.createEl('div', { cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
-        const headerEl = aliasEl.createEl('div', { cls: 'tree-item-self search-result-file-title is-clickable' });
+        const aliasEl = childrenRoot.createDiv({ cls: 'tree-item search-result' + (expanded ? '' : ' is-collapsed') });
+        const headerEl = aliasEl.createDiv({ cls: 'tree-item-self search-result-file-title is-clickable' });
 
         const iconEl = this.createCollapseIcon(headerEl, !expanded);
-        const treeItemInner = headerEl.createEl('div', { cls: 'tree-item-inner', text: alias });
-        const flairOuter = headerEl.createEl('div', { cls: 'tree-item-flair-outer' });
-        flairOuter.createEl('span', { cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
+        const treeItemInner = headerEl.createDiv({ cls: 'tree-item-inner', text: alias });
+        const flairOuter = headerEl.createDiv({ cls: 'tree-item-flair-outer' });
+        flairOuter.createSpan({ cls: 'tree-item-flair', text: (aliasDetails?.count ?? 0).toString() });
 
-        const aliasChildren = aliasEl.createEl('div', { cls: 'search-results-children' });
+        const aliasChildren = aliasEl.createDiv({ cls: 'search-results-children' });
         aliasChildren.addClass('alias-overview-backlinks');
         this.setCollapsedState(aliasEl, iconEl, aliasChildren, !expanded);
 
@@ -424,7 +428,7 @@ export class AliasOverviewView extends ItemView {
                 }
                 if (!aliasDetails || aliasDetails.count === 0) {
                     aliasChildren.empty();
-                    aliasChildren.createEl('div', { cls: 'search-empty-state', text: 'No backlinks found.' });
+                    aliasChildren.createDiv({ cls: 'search-empty-state', text: 'No backlinks found.' });
                 }
             }
             this.saveExpandedState();
@@ -447,7 +451,7 @@ export class AliasOverviewView extends ItemView {
             ev.stopPropagation();
             const menu = new Menu();
             this.setupAliasContextMenuCopyAlias(menu, alias);
-            this.setupAliasContextMenuRename(menu, treeItemRootAliasName, alias);
+            this.setupAliasContextMenuRename(menu, treeItemRootAliasName, alias, file);
             this.setupAliasContextMenuMoveAliasToOtherFile(menu, alias, file);
             this.setupAliasContextMenuOpenInBacklinkSearch(menu, alias, file);
             menu.showAtPosition({ x: ev.pageX, y: ev.pageY });
@@ -455,7 +459,7 @@ export class AliasOverviewView extends ItemView {
     }
 
 
-    private setupAliasContextMenuRename(menu: Menu, treeItemRootAliasName: HTMLDivElement, alias: string) {
+    private setupAliasContextMenuRename(menu: Menu, treeItemRootAliasName: HTMLDivElement, alias: string, file: TFile) {
         menu.addItem((item) => {
             item.setTitle('Rename');
             item.onClick(() => {
@@ -470,7 +474,7 @@ export class AliasOverviewView extends ItemView {
                         const newAlias = inputEl.value.trim();
                         if (newAlias && newAlias !== alias) {
                             treeItemRootAliasName.setText(newAlias);
-                            renameAliasInFrontmatter(this.app, this.app.workspace.getActiveFile() as TFile, alias, newAlias);
+                            renameAliasInFrontmatter(this.app, file, alias, newAlias);
                         }
                         inputEl.remove();
                     }
@@ -509,7 +513,7 @@ export class AliasOverviewView extends ItemView {
                 const aliasEntries = getAllAliasEntries(this.app, allFiles, true);
                 const filePicker = new FilePickerModal(this.app, aliasEntries, (filePickerItem) => {
                     if (filePickerItem.file) {
-                        moveAliasToOtherFileAsync(this.app, file, filePickerItem.file, alias);
+                        void moveAliasToOtherFileAsync(this.app, file, filePickerItem.file, alias);
                     }
                 })
                 filePicker.setTitle(`Move alias "${alias}" to another file`);
@@ -520,7 +524,7 @@ export class AliasOverviewView extends ItemView {
     }
     private setupAliasContextMenuOpenInBacklinkSearch(menu: Menu, alias: string, file: TFile) {
         menu.addItem((item) => {
-            item.setTitle('Open in Backlink Search as exact alias');
+            item.setTitle('Open in backlink search as exact alias');
             item.onClick(() => {
                 const filePickerItem: FilePickerItem = { file, alias, displayText: alias };
                 const backlinkSearchModal = new BacklinkSearchModal(this.app, this.plugin.settings, [filePickerItem]);
