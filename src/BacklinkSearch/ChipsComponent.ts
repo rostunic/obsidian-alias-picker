@@ -1,6 +1,3 @@
-// src/BacklinkSearch/ChipsComponent.ts
-
-import { TFile } from "obsidian";
 import { FilePickerItem } from "./FilePickerModal";
 
 export class ChipsComponent {
