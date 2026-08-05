@@ -1,4 +1,4 @@
-import { PluginSettingTab, App, Setting } from 'obsidian';
+import { PluginSettingTab, App, SettingDefinitionItem } from 'obsidian';
 import AliasPickerPlugin from './main';
 
 export interface AliasPickerSettingsData {
@@ -32,73 +32,33 @@ export class Settings extends PluginSettingTab {
 		await this.plugin.saveData(settings);
 	}
 
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Split sidebar for alias overview')
-			.setDesc('Whether to split the right sidebar when opening the alias overview view.')
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.getSettings().overviewSplitSidebar)
-					.onChange(async (value) => {
-						const currentSettings = this.plugin.getSettings();
-						currentSettings.overviewSplitSidebar = value;
-						await this.saveSettings(currentSettings);
-					})
-			);
-
-		new Setting(containerEl)
-			.setName('Open new leaf for alias overview')
-			.setDesc('Whether to open a new leaf even when the alias overview is already open.')
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.getSettings().overviewOpenNewLeaf)
-					.onChange(async (value) => {
-						const currentSettings = this.plugin.getSettings();
-						currentSettings.overviewOpenNewLeaf = value;
-						await this.saveSettings(currentSettings);
-					})
-			);
-
-		new Setting(containerEl)
-			.setName('Include aliases in backlink search results')
-			.setDesc('Whether to include aliases in the backlink search results.')
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.getSettings().includeAliasesInBacklinkSearchResults)
-					.onChange(async (value) => {
-						const currentSettings = this.plugin.getSettings();
-						currentSettings.includeAliasesInBacklinkSearchResults = value;
-						await this.saveSettings(currentSettings);
-					})
-			);
-
-		new Setting(containerEl)
-			.setName('Remember last filtered files and aliases in backlink search')
-			.setDesc('Whether to remember the last filtered files and aliases in the backlink search modal.')
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.getSettings().rememberLastFilteredFilesAndAliases)
-					.onChange(async (value) => {
-						const currentSettings = this.plugin.getSettings();
-						currentSettings.rememberLastFilteredFilesAndAliases = value;
-						await this.saveSettings(currentSettings);
-					})
-			);
-
-		new Setting(containerEl)
-			.setName('Focus first backlink search result on open')
-			.setDesc('Whether to focus the first backlink, when opening a file using the backlink search modal.')
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.getSettings().focusFirstBacklinkSearchResultOnOpen)
-					.onChange(async (value) => {
-						const currentSettings = this.plugin.getSettings();
-						currentSettings.focusFirstBacklinkSearchResultOnOpen = value;
-						await this.saveSettings(currentSettings);
-					})
-			);
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: 'Split sidebar for alias overview',
+				desc: 'Whether to split the right sidebar when opening the alias overview view.',
+				control: {type: 'toggle', key: 'overviewSplitSidebar',}
+			},
+			{
+				name: 'Open new leaf for alias overview',
+				desc: 'Whether to open a new leaf even when the alias overview is already open.',
+				control: {type: 'toggle', key: 'overviewOpenNewLeaf',}
+			},
+			{
+				name: 'Include aliases in backlink search results',
+				desc: 'Whether to include aliases in the backlink search results.',
+				control: {type: 'toggle', key: 'includeAliasesInBacklinkSearchResults',}
+			},
+			{
+				name: 'Remember last filtered files and aliases in backlink search',
+				desc: 'Whether to remember the last filtered files and aliases in the backlink search modal.',
+				control: {type: 'toggle', key: 'rememberLastFilteredFilesAndAliases',}
+			},
+			{
+				name: 'Focus first backlink search result on open',
+				desc: 'Whether to focus the first backlink, when opening a file using the backlink search modal.',
+				control: {type: 'toggle', key: 'focusFirstBacklinkSearchResultOnOpen',}
+			}
+		];
 	}
 }

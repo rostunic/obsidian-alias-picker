@@ -34,20 +34,18 @@ export class BlockPicker extends FuzzySuggestModal<BlockCache> {
 			text = `${text.slice(0, start)}<b style="background-color: #00000081; color: yellow;">${text.slice(start, end)}</b>${text.slice(end)}`;
 		}
 
-		const temp = document.createElement("div");
+		const temp = el.createDiv({cls: 'alias-picker-block-suggestion'});
 		const component = new Component();
 
-		MarkdownRenderer.render(
+		void MarkdownRenderer.render(
 			this.app,
 			text,
 			temp,
 			this.targetFile.path,
 			component
 		).then(() => {
-			const item = temp.firstChild ?? temp;
-			// remove margin and padding from the rendered element
-			(item as HTMLElement).style.margin = "0";
-			(item as HTMLElement).style.padding = "0";
+			const item = temp;
+			el.removeChild(temp);
 			el.appendChild(item);
 		});
 	}

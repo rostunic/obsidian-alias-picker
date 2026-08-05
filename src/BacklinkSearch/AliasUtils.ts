@@ -3,6 +3,7 @@
 import { TFile, App, Notice } from "obsidian";
 import { getBacklinksArray } from "../utilities";
 import { AliasPicker } from "../AliasPicker";
+import { ObsidianFrontmatter } from "../obsidian";
 
 export interface AliasEntry {
     alias: string;
@@ -14,13 +15,11 @@ export function getAliasesForFile(
     file: TFile,
     includeBasename: boolean
 ): string[] {
-    const aliases =
-        app.metadataCache
-            .getFileCache(file)
-            ?.frontmatter
-            ?.aliases
-        ?? [];
-    if(includeBasename && !aliases.includes(file.basename)) {
+    const frontmatter = app.metadataCache
+        .getFileCache(file)
+        ?.frontmatter as ObsidianFrontmatter | undefined;
+    const aliases = frontmatter?.aliases ?? [];
+    if (includeBasename && !aliases.includes(file.basename)) {
         return [file.basename, ...aliases];
     }
 
@@ -60,17 +59,25 @@ export async function moveAliasToOtherFileAsync(app: App, file: TFile, otherFile
     new Notice(`Moved alias "${alias}" from ${file.path} to ${otherFile.path} and updated backlinks.`);
 }
 
-export function renameAliasInFrontmatter(app: App, file: TFile, oldAlias: string, newAlias: string) {
-    app.fileManager.processFrontMatter(file, (frontmatter) => {
+export async function renameAliasInFrontmatter(app: App, file: TFile, oldAlias: string, newAlias: string) {
+    let wasNotInAliases = false;
+    await app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
         const existingRaw = frontmatter?.aliases;
         const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
         const updatedAliases = existingAliases.map(a => a === oldAlias ? newAlias : a);
+        if( !updatedAliases.includes(newAlias)) {
+            wasNotInAliases = true;
+            updatedAliases.push(newAlias);
+        }
         frontmatter.aliases = updatedAliases;
     });
+    if(wasNotInAliases) {
+        await renameAliasesInBacklinksAsync(app, file, oldAlias, newAlias);
+    }
 }
 
 export async function removeAliasFromFileFrontmatterAsync(app: App, file: TFile, alias: string) {
-    app.fileManager.processFrontMatter(file, (frontmatter) => {
+    await app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
         const existingRaw = frontmatter?.aliases;
         const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
         const updatedAliases = existingAliases.filter(a => a !== alias);
@@ -79,7 +86,7 @@ export async function removeAliasFromFileFrontmatterAsync(app: App, file: TFile,
     new Notice(`Removed alias "${alias}" from ${file.path}`);
 }
 export async function addAliasToFileFrontmatterAsync(app: App, file: TFile, alias: string) {
-    app.fileManager.processFrontMatter(file, (frontmatter) => {
+    await app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
         const existingRaw = frontmatter?.aliases;
         const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
         if (!existingAliases.includes(alias)) {

@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu, App } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
 import { getAllAliasEntries, moveAliasToOtherFileAsync, renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
@@ -21,6 +21,10 @@ type BacklinkGroup = {
 
 type AliasKey = string & { __brand: 'AliasKey' };
 type BacklinkGroupKey = string & { __brand: 'BacklinkGroupKey' };
+type LocalStorageExpandedState = {
+    aliases: AliasKey[];
+    backlinks: BacklinkGroupKey[];
+}
 
 export class AliasOverviewView extends ItemView {
     public static readonly Type = 'alias-overview';
@@ -45,19 +49,20 @@ export class AliasOverviewView extends ItemView {
     private loadExpandedState() {
         const key = this.getExpandedStateKey();
         if (!key) return;
-        const raw = localStorage.getItem(key);
+        const raw = this.app.loadLocalStorage(key) as string | null;
         if (!raw) return;
-        const obj = JSON.parse(raw);
+        const obj = JSON.parse(raw) as LocalStorageExpandedState;
         this.expandedAliases = new Set(obj.aliases || []);
         this.expandedBacklinks = new Set(obj.backlinks || []);
     }
     private saveExpandedState() {
         const key = this.getExpandedStateKey();
         if (!key) return;
-        localStorage.setItem(key, JSON.stringify({
+        const state: LocalStorageExpandedState = {
             aliases: Array.from(this.expandedAliases),
             backlinks: Array.from(this.expandedBacklinks),
-        }));
+        };
+        this.app.saveLocalStorage(key, JSON.stringify(state));
     }
 
     override getViewType(): string {
@@ -122,9 +127,29 @@ export class AliasOverviewView extends ItemView {
     }
 
     private createCollapseIcon(parent: HTMLElement, collapsed: boolean) {
-        const iconEl = parent.createEl('div', { cls: 'tree-item-icon collapse-icon' });
+        const iconEl = parent.createDiv({ cls: 'tree-item-icon collapse-icon' });
         if (collapsed) iconEl.addClass('is-collapsed');
-        iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`;
+        // iconEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle"><path d="M3 8L12 17L21 8"></path></svg>`;
+        const svg = iconEl.createSvg("svg", {
+            attr: {
+                xmlns: "http://www.w3.org/2000/svg",
+                width: "24",
+                height: "24",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                "stroke-width": "2",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round",
+            },
+            cls: ["svg-icon", "right-triangle"],
+        });
+
+        svg.createSvg("path", {
+            attr: {
+                d: "M3 8L12 17L21 8",
+            },
+        });
         return iconEl;
     }
 
@@ -207,7 +232,7 @@ export class AliasOverviewView extends ItemView {
             if (group.file) {
                 matchEl.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    if(!group.file) return;
+                    if (!group.file) return;
                     void this.openFileAt(group.file, link);
                 });
             }
@@ -344,7 +369,7 @@ export class AliasOverviewView extends ItemView {
                 .sort((a, b) => b[1].count - a[1].count)
                 .map(([alias]) => alias);
 
-            const allAliases = [...new Set([...frontmatterAliases, ...sortedAliases])];
+            const allAliases = [...new Set([file.basename, ...frontmatterAliases, ...sortedAliases])];
             if (allAliases.length === 0) {
                 this.contentEl.setText('No aliases found');
                 return;
@@ -474,7 +499,7 @@ export class AliasOverviewView extends ItemView {
                         const newAlias = inputEl.value.trim();
                         if (newAlias && newAlias !== alias) {
                             treeItemRootAliasName.setText(newAlias);
-                            renameAliasInFrontmatter(this.app, file, alias, newAlias);
+                            void renameAliasInFrontmatter(this.app, file, alias, newAlias);
                         }
                         inputEl.remove();
                     }

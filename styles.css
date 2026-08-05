@@ -58,3 +58,7 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 }
 
+.alias-picker-block-suggestion > * {
+	margin: 0;
+	padding: 0 10px;
+}
