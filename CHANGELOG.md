@@ -1,4 +1,11 @@
 # Changelog
+# [1.0.10] - 2026-08-05
+### Added
+- Migrated to new Obsidian plugin API for settings, enabling better integration with Obsidian's new plugin settings tab.
+### Fixed
+- Fixed an issue where renaming an alias in the frontmatter did not update backlinks if the alias was not already present in the frontmatter. Now, if the alias is not found in the frontmatter, it will be added and all backlinks will be updated accordingly.
+- Fixed warning obsidian review warnings
+
 
 ## [1.0.9] - 2026-08-04
 ### Added

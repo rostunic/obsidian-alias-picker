@@ -1,7 +1,7 @@
 {
 	"id": "alias-picker",
 	"name": "Alias Picker",
-	"version": "1.0.9",
+	"version": "1.0.10",
 	"minAppVersion": "1.13.1",
 	"description": "Pick aliases or blocks of links. Automatic update backlinks when renaming aliases. Backlink search for multiple files and exact aliases. Alias overview to see alias backlinks. Your alias management companion.",
 	"author": "rostunic",
