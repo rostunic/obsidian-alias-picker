@@ -7,7 +7,7 @@ import {
     TFile
 } from "obsidian";
 
-import { AliasEntry, getAliasesForFile } from "./AliasUtils";
+import { AliasEntry } from "./AliasUtils";
 
 export interface FilePickerItem {
     file: TFile;

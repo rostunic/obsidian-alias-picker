@@ -8,7 +8,7 @@ import {
 
 import { getBacklinksArray } from "../utilities";
 import { FilePickerItem } from "./FilePickerModal";
-import { AliasEntry, getAliasesAndBaseName, getAliasesForFile } from "./AliasUtils";
+import { AliasEntry, getAliasesAndBaseName } from "./AliasUtils";
 
 export class BacklinkEngine {
 
@@ -19,10 +19,10 @@ export class BacklinkEngine {
         private readonly app: App
     ) { }
 
-    async getIntersection(
+    getIntersection(
         files: TFile[],
         exactAliases: FilePickerItem[]
-    ): Promise<TFile[]> {
+    ): TFile[] {
 
         if (files.length + exactAliases.length === 0) {
             return [];
@@ -44,19 +44,19 @@ export class BacklinkEngine {
             .filter((file): file is TFile => file instanceof TFile);
     }
 
-    async getPlusCandidates(
+    getPlusCandidates(
         selectedFiles: TFile[],
         exactAliases: FilePickerItem[],
         excludedFiles: TFile[] = [],
         includeAllAliases: boolean
-    ): Promise<AliasEntry[]> {
+    ): AliasEntry[] {
 
         if (selectedFiles.length === 0 && exactAliases.length === 0) {
             return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file)]
                 .map(alias => ({ alias, file })));
         }
 
-        const intersection = await this.getIntersection(selectedFiles, exactAliases);
+        const intersection = this.getIntersection(selectedFiles, exactAliases);
 
         // Excluded Files ausschließen
         const relevantBacklinks = intersection.filter(
@@ -88,18 +88,18 @@ export class BacklinkEngine {
 
     }
 
-    async getMinusCandidates(
+    getMinusCandidates(
         selectedFiles: TFile[],
         exactAliases: FilePickerItem[],
         excludedFiles: TFile[] = []
-    ): Promise<AliasEntry[]> {
+    ): AliasEntry[] {
 
         if (selectedFiles.length === 0 && exactAliases.length === 0) {
             return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file)]
                 .map(alias => ({ alias, file })));
         }
 
-        const intersection = await this.getIntersection(selectedFiles, exactAliases);
+        const intersection = this.getIntersection(selectedFiles, exactAliases);
 
         // Excluded Files ausschließen
         const relevantBacklinks = intersection.filter(

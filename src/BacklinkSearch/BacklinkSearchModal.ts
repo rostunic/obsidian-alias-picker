@@ -92,7 +92,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         this.inputEl.addEventListener(
             "input",
             () => {
-                void this.handleInput();
+                this.handleInput();
             }
         );
 
@@ -166,12 +166,12 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         super.onClose();
     }
 
-    private async handleInput(): Promise<void> {
+    private handleInput(): void {
         if (this.inputEl.value.startsWith("+")) {
             this.inputEl.value = "";
 
             // Alle aktuellen included und excluded Files berücksichtigen
-            const files = await this.engine.getPlusCandidates(
+            const files = this.engine.getPlusCandidates(
                 this.selectedFiles.map(fileItem => fileItem.file),
                 this.exactBacklinksFileAliases,
                 this.excludedBacklinksFiles.map(fileItem => fileItem.file),
@@ -183,7 +183,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             this.inputEl.value = "";
 
             // Alle aktuellen included und excluded Files berücksichtigen
-            const files = await this.engine.getPlusCandidates(
+            const files = this.engine.getPlusCandidates(
                 this.selectedFiles.map(fileItem => fileItem.file),
                 this.exactBacklinksFileAliases,
                 this.excludedBacklinksFiles.map(fileItem => fileItem.file),
@@ -195,7 +195,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             this.inputEl.value = "";
 
             // Alle aktuellen included und excluded Files berücksichtigen
-            const files = await this.engine.getMinusCandidates(
+            const files = this.engine.getMinusCandidates(
                 this.selectedFiles.map(fileItem => fileItem.file),
                 this.exactBacklinksFileAliases,
                 this.excludedBacklinksFiles.map(fileItem => fileItem.file)
@@ -225,7 +225,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
     }
 
     private async refresh(): Promise<void> {
-        const files = await this.engine.getIntersection(this.selectedFiles.map(fileItem => fileItem.file), this.exactBacklinksFileAliases);
+        const files = this.engine.getIntersection(this.selectedFiles.map(fileItem => fileItem.file), this.exactBacklinksFileAliases);
 
         // Excluded Files ausschließen
         const filteredFiles = files.filter(
