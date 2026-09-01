@@ -51,7 +51,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
         this.exactBacklinksFileAliases = exactBacklinksFileAliases ?? (useLastState ? BacklinkSearchModal.lastExactBacklinksFileAliases : []);
         this.selectedFiles = selectedFiles ?? (useLastState ? BacklinkSearchModal.lastSelectedFiles : []);
 
-        this.engine = new BacklinkEngine(app);
+        this.engine = new BacklinkEngine(app, this.settings);
 
         this.setPlaceholder("Search common backlink files. Type '+', '*', or '-', or search by alias or filename.");
 
@@ -250,7 +250,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 file
             });
             if (this.settings.includeAliasesInBacklinkSearchResults) {
-                const aliases = getAliasesForFile(this.app, file, true);
+                const aliases = getAliasesForFile(this.app, file, this.settings.interpretFileNameAsAlias);
                 for (const alias of aliases) {
                     searchItems.push({
                         type: "alias",
@@ -298,7 +298,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
             text += ` (${item.file.path})`;
         }
         if (!this.settings.includeAliasesInBacklinkSearchResults) {
-            const aliases = getAliasesForFile(this.app, item.file, true);
+            const aliases = getAliasesForFile(this.app, item.file, this.settings.interpretFileNameAsAlias);
             text += aliases.length > 0 ? ` [${aliases.join(", ")}]` : "";
         }
         return text;
@@ -323,7 +323,7 @@ export class BacklinkSearchModal extends FuzzySuggestModal<SearchItem> {
                 text: item.file.basename
             });
             if (!this.settings.includeAliasesInBacklinkSearchResults) {
-                for (const alias of getAliasesForFile(this.app, item.file, true)) {
+                for (const alias of getAliasesForFile(this.app, item.file, this.settings.interpretFileNameAsAlias)) {
                     el.createDiv({
                         cls: "search-suggestion-subtext",
                         text: alias

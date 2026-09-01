@@ -53,10 +53,12 @@ export function getBacklinksArray(app: App, file: TFile) {
 	return Array.from(result.entries());
 }
 
-export function getKnownFileAliases(app: App, currentFile: TFile) {
+export function getKnownFileAliases(app: App, currentFile: TFile, interpretFileNameAsAlias: boolean): Set<string> {
 	const backlinksToCurrentFile = getBacklinksArray(app, currentFile);
 	const aliases = new Set<string>();
-	aliases.add(currentFile.basename);
+	if (interpretFileNameAsAlias) {
+		aliases.add(currentFile.basename);
+	}
 	for (const link of backlinksToCurrentFile.flatMap(x => x[1])) {
 		if (link.displayText)
 			aliases.add(link.displayText);

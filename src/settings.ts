@@ -7,6 +7,7 @@ export interface AliasPickerSettingsData {
 	includeAliasesInBacklinkSearchResults: boolean;
 	rememberLastFilteredFilesAndAliases: boolean;
 	focusFirstBacklinkSearchResultOnOpen: boolean;
+	interpretFileNameAsAlias: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	includeAliasesInBacklinkSearchResults: false,
 	rememberLastFilteredFilesAndAliases: false,
 	focusFirstBacklinkSearchResultOnOpen: true,
+	interpretFileNameAsAlias: true,
 };
 
 export class Settings extends PluginSettingTab {
@@ -58,6 +60,11 @@ export class Settings extends PluginSettingTab {
 				name: 'Focus first backlink search result on open',
 				desc: 'Whether to focus the first backlink, when opening a file using the backlink search modal.',
 				control: {type: 'toggle', key: 'focusFirstBacklinkSearchResultOnOpen',}
+			},
+			{
+				name: 'Interpret file name as alias',
+				desc: 'Whether to interpret the file name as an alias.',
+				control: {type: 'toggle', key: 'interpretFileNameAsAlias',}
 			}
 		];
 	}

@@ -9,6 +9,7 @@ import {
 import { getBacklinksArray } from "../utilities";
 import { FilePickerItem } from "./FilePickerModal";
 import { AliasEntry, getAliasesAndBaseName } from "./AliasUtils";
+import { AliasPickerSettingsData } from "../settings";
 
 export class BacklinkEngine {
 
@@ -16,7 +17,8 @@ export class BacklinkEngine {
         new Map<string, [string, LinkCache[]][]>();
 
     constructor(
-        private readonly app: App
+        private readonly app: App,
+        private readonly settings: AliasPickerSettingsData
     ) { }
 
     getIntersection(
@@ -52,7 +54,7 @@ export class BacklinkEngine {
     ): AliasEntry[] {
 
         if (selectedFiles.length === 0 && exactAliases.length === 0) {
-            return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file)]
+            return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file, this.settings)]
                 .map(alias => ({ alias, file })));
         }
 
@@ -72,7 +74,7 @@ export class BacklinkEngine {
                     const dest = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path);
                     if (dest instanceof TFile) {
                         if (includeAllAliases) {
-                            const aliases = getAliasesAndBaseName(this.app, dest);
+                            const aliases = getAliasesAndBaseName(this.app, dest, this.settings);
                             for (const alias of aliases) {
                                 result.set(`${dest.path}_${alias}`, { alias: alias, file: dest });
                             }
@@ -95,7 +97,7 @@ export class BacklinkEngine {
     ): AliasEntry[] {
 
         if (selectedFiles.length === 0 && exactAliases.length === 0) {
-            return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file)]
+            return this.app.vault.getMarkdownFiles().flatMap(file => [...getAliasesAndBaseName(this.app, file, this.settings)]
                 .map(alias => ({ alias, file })));
         }
 
@@ -106,7 +108,7 @@ export class BacklinkEngine {
             file => !excludedFiles.some(excluded => excluded.path === file.path)
         );
 
-        return relevantBacklinks.flatMap(file => [...getAliasesAndBaseName(this.app, file)].map(alias => ({ alias, file })));
+        return relevantBacklinks.flatMap(file => [...getAliasesAndBaseName(this.app, file, this.settings)].map(alias => ({ alias, file })));
     }
 
     private getBacklinkFiles(

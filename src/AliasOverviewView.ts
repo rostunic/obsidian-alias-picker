@@ -368,8 +368,9 @@ export class AliasOverviewView extends ItemView {
             const sortedAliases = Object.entries(aliasCounts)
                 .sort((a, b) => b[1].count - a[1].count)
                 .map(([alias]) => alias);
+            const baseNameAliases = this.plugin.settings.interpretFileNameAsAlias ? [file.basename] : [];
 
-            const allAliases = [...new Set([file.basename, ...frontmatterAliases, ...sortedAliases])];
+            const allAliases = [...new Set([ ...baseNameAliases, ...frontmatterAliases, ...sortedAliases])];
             if (allAliases.length === 0) {
                 this.contentEl.setText('No aliases found');
                 return;
@@ -384,7 +385,7 @@ export class AliasOverviewView extends ItemView {
 
             const addButton = this.contentEl.createEl('button', { cls: 'button', text: 'Add all known aliases to current file' });
             addButton.addEventListener('click', () => {
-                const aliases = getKnownFileAliases(this.app, file);
+                const aliases = getKnownFileAliases(this.app, file, this.plugin.settings.interpretFileNameAsAlias);
                 void this.app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
                     const existingRaw = frontmatter?.aliases;
                     const existingAliases: string[] = Array.isArray(existingRaw) ? existingRaw : [];
@@ -535,7 +536,7 @@ export class AliasOverviewView extends ItemView {
             item.setTitle('Move alias to another file');
             item.onClick(() => {
                 const allFiles = this.app.vault.getFiles();
-                const aliasEntries = getAllAliasEntries(this.app, allFiles, true);
+                const aliasEntries = getAllAliasEntries(this.app, allFiles, this.plugin.settings.interpretFileNameAsAlias);
                 const filePicker = new FilePickerModal(this.app, aliasEntries, (filePickerItem) => {
                     if (filePickerItem.file) {
                         void moveAliasToOtherFileAsync(this.app, file, filePickerItem.file, alias);

@@ -74,7 +74,8 @@ export default class AliasPickerPlugin extends Plugin {
 				const aliases: string[] = normalizeAliases(context.fileCache.frontmatter.aliases);
 				if (aliases.length === 0) return;
 
-				let allowedNames = [...new Set([...aliases, context.file.basename])];
+				const baseNameAliases = this.settings.interpretFileNameAsAlias ? [context.file.basename] : [];
+				let allowedNames = [...new Set([...aliases, ...baseNameAliases])];
 				if (context.currentLink.displayText) {
 					allowedNames = allowedNames.filter(x => x !== context.currentLink.displayText);
 				}
@@ -142,7 +143,7 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!currentFile || !editor) return;
 
 				if (!checking) {
-					const aliases = getKnownFileAliases(this.app, currentFile);
+					const aliases = getKnownFileAliases(this.app, currentFile, this.settings.interpretFileNameAsAlias);
 
 					void this.app.fileManager.processFrontMatter(currentFile, (frontmatter: ObsidianFrontmatter) => {
 						const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);

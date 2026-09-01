@@ -4,6 +4,7 @@ import { TFile, App, Notice } from "obsidian";
 import { getBacklinksArray } from "../utilities";
 import { AliasPicker } from "../AliasPicker";
 import { ObsidianFrontmatter } from "../obsidian";
+import { AliasPickerSettingsData } from "../settings";
 
 export interface AliasEntry {
     alias: string;
@@ -46,9 +47,9 @@ export function getAllAliasEntries(
     return result;
 }
 
-export function getAliasesAndBaseName(app: App, dest: TFile) {
+export function getAliasesAndBaseName(app: App, dest: TFile, settings: AliasPickerSettingsData): Set<string> {
     const aliases = new Set<string>();
-    getAliasesForFile(app, dest, true).forEach(alias => aliases.add(alias));
+    getAliasesForFile(app, dest, settings.interpretFileNameAsAlias).forEach(alias => aliases.add(alias));
     return aliases;
 }
 

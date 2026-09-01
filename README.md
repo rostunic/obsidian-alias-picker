@@ -65,5 +65,6 @@ The plugin provides the following settings in Obsidian's plugin settings tab:
 - **Focus first backlink search result on open**: When opening a file from the backlink search modal, the cursor is automatically positioned at the first backlink match (default: true)
 - **Split Sidebar for Alias Overview**: Controls whether the sidebar splits when opening the Alias Overview (default: true)
 - **Open New Leaf for Alias Overview**: Controls whether a new leaf is created or an existing one is reused (default: true)
+- **Interpret file name as alias**: Controls whether the file name is interpreted as an alias (default: true)
 
 For a complete changelog, see the [CHANGELOG.md](CHANGELOG.md).

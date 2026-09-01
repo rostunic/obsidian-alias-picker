@@ -1,4 +1,8 @@
 # Changelog
+# [1.0.11] - 2026-09-01
+### Added
+- Added setting to interpret the file name as an alias.
+
 # [1.0.10] - 2026-08-05
 ### Added
 - Migrated to new Obsidian plugin API for settings, enabling better integration with Obsidian's new plugin settings tab.
