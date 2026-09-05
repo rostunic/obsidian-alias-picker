@@ -66,5 +66,12 @@ The plugin provides the following settings in Obsidian's plugin settings tab:
 - **Split Sidebar for Alias Overview**: Controls whether the sidebar splits when opening the Alias Overview (default: true)
 - **Open New Leaf for Alias Overview**: Controls whether a new leaf is created or an existing one is reused (default: true)
 - **Interpret file name as alias**: Controls whether the file name is interpreted as an alias (default: true)
+- **Add aliases automatically**: Controls whether to automatically add aliases to the frontmatter of files when they are linked to (default: false)
 
 For a complete changelog, see the [CHANGELOG.md](CHANGELOG.md).
+
+
+# Permissions
+For your convenience, the plugin requests the following permissions: 
+- Clipboard access is write-only and used for copying selected aliases to the clipboard. The plugin does not read from the clipboard.
+- Access to all files is used to find all known aliases and enable searching for backlinks in all files. 

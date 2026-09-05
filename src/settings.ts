@@ -8,6 +8,7 @@ export interface AliasPickerSettingsData {
 	rememberLastFilteredFilesAndAliases: boolean;
 	focusFirstBacklinkSearchResultOnOpen: boolean;
 	interpretFileNameAsAlias: boolean;
+	addAliasesAutomatically: boolean;
 }
 
 export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: AliasPickerSettingsData = {
 	rememberLastFilteredFilesAndAliases: false,
 	focusFirstBacklinkSearchResultOnOpen: true,
 	interpretFileNameAsAlias: true,
+	addAliasesAutomatically: false,
 };
 
 export class Settings extends PluginSettingTab {
@@ -39,33 +41,39 @@ export class Settings extends PluginSettingTab {
 			{
 				name: 'Split sidebar for alias overview',
 				desc: 'Whether to split the right sidebar when opening the alias overview view.',
-				control: {type: 'toggle', key: 'overviewSplitSidebar',}
+				control: { type: 'toggle', key: 'overviewSplitSidebar', }
 			},
 			{
 				name: 'Open new leaf for alias overview',
 				desc: 'Whether to open a new leaf even when the alias overview is already open.',
-				control: {type: 'toggle', key: 'overviewOpenNewLeaf',}
+				control: { type: 'toggle', key: 'overviewOpenNewLeaf', }
 			},
 			{
 				name: 'Include aliases in backlink search results',
 				desc: 'Whether to include aliases in the backlink search results.',
-				control: {type: 'toggle', key: 'includeAliasesInBacklinkSearchResults',}
+				control: { type: 'toggle', key: 'includeAliasesInBacklinkSearchResults', }
 			},
 			{
 				name: 'Remember last filtered files and aliases in backlink search',
 				desc: 'Whether to remember the last filtered files and aliases in the backlink search modal.',
-				control: {type: 'toggle', key: 'rememberLastFilteredFilesAndAliases',}
+				control: { type: 'toggle', key: 'rememberLastFilteredFilesAndAliases', }
 			},
 			{
 				name: 'Focus first backlink search result on open',
 				desc: 'Whether to focus the first backlink, when opening a file using the backlink search modal.',
-				control: {type: 'toggle', key: 'focusFirstBacklinkSearchResultOnOpen',}
+				control: { type: 'toggle', key: 'focusFirstBacklinkSearchResultOnOpen', }
 			},
 			{
 				name: 'Interpret file name as alias',
 				desc: 'Whether to interpret the file name as an alias.',
-				control: {type: 'toggle', key: 'interpretFileNameAsAlias',}
-			}
+				control: { type: 'toggle', key: 'interpretFileNameAsAlias', }
+			},
+			{
+				name: 'Add aliases automatically',
+				desc: 'Whether to automatically add aliases to the frontmatter of files when they are linked to.',
+				control: { type: 'toggle', key: 'addAliasesAutomatically', }
+				
+			},
 		];
 	}
 }

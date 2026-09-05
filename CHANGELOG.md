@@ -1,4 +1,8 @@
 # Changelog
+# [1.0.12] - 2026-09-05
+### Added
+- Added setting to automatically add aliases to the frontmatter of files when they are linked to.
+- Added commands to add all known aliases to files in a folder or the entire vault. This feature is useful for ensuring that all aliases are present in the frontmatter of files, especially when using the "Add aliases automatically" setting.
 # [1.0.11] - 2026-09-01
 ### Added
 - Added setting to interpret the file name as an alias.

@@ -1,4 +1,4 @@
-import { App, BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TAbstractFile, TFile, TFolder, parseLinktext } from 'obsidian';
+import { App, BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, PluginManifest, TAbstractFile, TFile, TFolder, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
@@ -24,13 +24,16 @@ export default class AliasPickerPlugin extends Plugin {
 	private aliasCache: AliasCache = new AliasCache();
 	private aliasRenameListener: AliasRenameListener = new AliasRenameListener(this.app, this.aliasCache);
 	public settings: AliasPickerSettingsData = DEFAULT_SETTINGS;
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
+	}
 
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new Settings(this.app, this));
 		this.registerView(AliasOverviewView.Type, (leaf) => new AliasOverviewView(leaf, this.aliasCache, this));
 
-		this.aliasRenameListener.startListening();
+		this.aliasRenameListener.startListening(this.settings);
 		this.addCommand({
 			id: 'open-alias-overview',
 			name: 'Open alias overview',

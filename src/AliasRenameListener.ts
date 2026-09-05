@@ -1,11 +1,13 @@
-import { App, TAbstractFile, TFile } from 'obsidian';
+import { App, CachedMetadata, TAbstractFile, TFile } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { normalizeAliases } from './utilities';
-import { renameAliasesInBacklinksAsync } from './BacklinkSearch/AliasUtils';
+import { addAliasToFileFrontmatterAsync, renameAliasesInBacklinksAsync } from './BacklinkSearch/AliasUtils';
+import { AliasPickerSettingsData } from './settings';
 
 export class AliasRenameListener {
     private pendingTimers: Map<string, number> = new Map();
     private initialResolvedHandled = false;
+    private settings: AliasPickerSettingsData | undefined = undefined;
 
     constructor(private app: App, private aliasCache: AliasCache) {
     }
@@ -24,7 +26,8 @@ export class AliasRenameListener {
         this.populateCacheFromMetadata();
     };
 
-    public startListening() {
+    public startListening(settings: AliasPickerSettingsData) {
+        this.settings = settings;
         // Populate once immediately (may be partial on cold start) and once after initial resolve.
         this.populateCacheFromMetadata();
 
@@ -47,8 +50,22 @@ export class AliasRenameListener {
         this.pendingTimers.clear();
     }
 
-    private processFileAliases = async (file: TFile) => {
-        const cache = this.app.metadataCache.getFileCache(file);
+    private processOutgoingLinks = async (file: TFile, cache: CachedMetadata | null) => {
+        const outgoingLinks = cache?.links ?? [];
+        for (const link of outgoingLinks) {
+            const targetFile = this.app.metadataCache.getFirstLinkpathDest(link.link, file.path);
+            if (!targetFile) continue;
+            const targetPath = targetFile.path;
+            const targetAliases = this.aliasCache.getAliases(targetPath) ?? [];
+            if (targetAliases.length === 0) continue;
+            const displayText = link.displayText ?? targetFile.basename;
+            if (!targetAliases.includes(displayText)) {
+                await addAliasToFileFrontmatterAsync(this.app, targetFile, displayText);
+            }
+        }
+    }
+
+    private processFileAliases = async (file: TFile, cache: CachedMetadata | null) => {
         const aliases = normalizeAliases(cache?.frontmatter?.aliases);
 
         const oldAliases = this.aliasCache.getAliases(file.path) ?? [];
@@ -75,7 +92,11 @@ export class AliasRenameListener {
 
         const timer = window.setTimeout(() => {
             this.pendingTimers.delete(key);
-            void this.processFileAliases(file);
+            const cache = this.app.metadataCache.getFileCache(file);
+            void this.processFileAliases(file, cache);
+            if (this.settings?.addAliasesAutomatically) {
+                void this.processOutgoingLinks(file, cache);
+            }
         }, 500);
 
         this.pendingTimers.set(key, timer);
