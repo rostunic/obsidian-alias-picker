@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu } from 'obsidian';
+import { ItemView, WorkspaceLeaf, Notice, LinkCache, TFile, MarkdownView, Menu, App } from 'obsidian';
 import { AliasCache } from './AliasCache';
 import { getBacklinksArray, getKnownFileAliases, normalizeAliases } from './utilities';
 import { getAllAliasEntries, moveAliasToOtherFileAsync, renameAliasInFrontmatter } from './BacklinkSearch/AliasUtils';
@@ -6,6 +6,7 @@ import { FilePickerItem, FilePickerModal } from './BacklinkSearch/FilePickerModa
 import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
 import AliasPickerPlugin from './main';
 import { ObsidianFrontmatter } from './obsidian';
+import { AliasPickerSettingsData } from './settings';
 
 type AliasDetails = {
     alias: AliasKey;
@@ -370,7 +371,7 @@ export class AliasOverviewView extends ItemView {
                 .map(([alias]) => alias);
             const baseNameAliases = this.plugin.settings.interpretFileNameAsAlias ? [file.basename] : [];
 
-            const allAliases = [...new Set([ ...baseNameAliases, ...frontmatterAliases, ...sortedAliases])];
+            const allAliases = [...new Set([...baseNameAliases, ...frontmatterAliases, ...sortedAliases])];
             if (allAliases.length === 0) {
                 this.contentEl.setText('No aliases found');
                 return;
@@ -558,4 +559,38 @@ export class AliasOverviewView extends ItemView {
             });
         });
     }
+    public static findAliasOverviewLeaf(app: App) {
+        const leaves = app.workspace.getLeavesOfType(AliasOverviewView.Type);
+        return leaves.length > 0 ? leaves[0] : null;
+    }
+
+    public static async openAliasOverview(app: App, settings2: AliasPickerSettingsData) {
+		app.workspace.rightSplit.expand();
+	
+		if (!settings2.overviewOpenNewLeaf) {
+			// Check if Alias Overview is already open in any leaf
+			const existingLeaf = AliasOverviewView.findAliasOverviewLeaf(app);
+			if (existingLeaf) {
+				// Reuse existing leaf
+				await existingLeaf.setViewState({
+					type: AliasOverviewView.Type,
+					active: true,
+				});
+				return;
+			}
+		}
+	
+		// Create new leaf with or without split based on settings
+		const split = settings2.overviewSplitSidebar;
+		const newLeaf = app.workspace.getRightLeaf(split);
+		if (!newLeaf) {
+			console.error('Failed to create new leaf for Alias Overview');
+			return;
+		}
+		await newLeaf?.setViewState({
+			type: AliasOverviewView.Type,
+			active: true,
+		});
+	}
+
 }

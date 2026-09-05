@@ -1,4 +1,4 @@
-import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext, WorkspaceLeaf } from 'obsidian';
+import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
@@ -34,32 +34,7 @@ export default class AliasPickerPlugin extends Plugin {
 			id: 'open-alias-overview',
 			name: 'Open alias overview',
 			callback: () => {
-				this.app.workspace.rightSplit.expand();
-
-				if (!this.settings.overviewOpenNewLeaf) {
-					// Check if Alias Overview is already open in any leaf
-					const existingLeaf = this.findAliasOverviewLeaf();
-					if (existingLeaf) {
-						// Reuse existing leaf
-						void existingLeaf.setViewState({
-							type: AliasOverviewView.Type,
-							active: true,
-						});
-						return;
-					}
-				}
-
-				// Create new leaf with or without split based on settings
-				const split = this.settings.overviewSplitSidebar;
-				const newLeaf = this.app.workspace.getRightLeaf(split);
-				if (!newLeaf) {
-					console.error('Failed to create new leaf for Alias Overview');
-					return;
-				}
-				void newLeaf?.setViewState({
-					type: AliasOverviewView.Type,
-					active: true,
-				});
+				void AliasOverviewView.openAliasOverview(this.app, this.settings);
 			}
 		});
 
@@ -221,10 +196,5 @@ export default class AliasPickerPlugin extends Plugin {
 
 	public getSettings(): AliasPickerSettingsData {
 		return this.settings;
-	}
-
-	private findAliasOverviewLeaf(): WorkspaceLeaf | null {
-		const leaves = this.app.workspace.getLeavesOfType(AliasOverviewView.Type);
-		return leaves.length > 0 ? leaves[0] : null;
 	}
 }
