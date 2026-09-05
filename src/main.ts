@@ -116,12 +116,7 @@ export default class AliasPickerPlugin extends Plugin {
 			editorCheckCallback: (checking: boolean, editor: Editor, activeFileInfo: MarkdownFileInfo) => {
 				const currentFile = activeFileInfo.file;
 				if (!currentFile || !editor) return;
-
-				if (!checking) {
-					const app = this.app;
-					const settings = this.settings;
-					addAllAliasesToFile(app, currentFile, settings);
-				}
+				if (!checking) addAllAliasesToFile(this.app, currentFile, this.settings);
 				return true;
 			}
 		});
