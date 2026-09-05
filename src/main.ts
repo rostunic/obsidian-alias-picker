@@ -1,4 +1,4 @@
-import { App, BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext } from 'obsidian';
+import { App, BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TAbstractFile, TFile, TFolder, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
@@ -152,7 +152,14 @@ export default class AliasPickerPlugin extends Plugin {
 				if (parentFolders.length === 0) return;
 				if (!checking) {
 					const picker = new FolderPicker(this.app, parentFolders, (folder) => {
-						const allFiles = folder.children.filter((child): child is TFile => child instanceof TFile && child.extension === 'md');
+						function getFiles(child: TAbstractFile): TFile[] {
+							if (child instanceof TFile && child.extension === 'md')
+								return [child];
+							if (child instanceof TFolder)
+								return child.children.flatMap(getFiles);
+							return [];
+						}
+						const allFiles = folder.children.flatMap(getFiles);
 						void addKnownAliasesToFiles(allFiles, folder.name, this.app, this.settings);
 					});
 					picker.open();
