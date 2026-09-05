@@ -18,6 +18,7 @@ These commands simplify the process of modifying wiki or Markdown links within y
 - **Pick block**: Modify the referenced block within the file using the '#^BlockIdentifier' syntax.
 - **Automatic alias renaming**: When renaming an alias, the plugin automatically updates all instances of that alias throughout your vault.
 - **Alias Overview**: Use the "Open Alias Overview" command to view all aliases in your vault and see the usages of each alias.
+- **Add known aliases to files**: Use the "Add known aliases to file" command to add all known aliases for a file, folder, or the entire vault to the frontmatter of the respective files.
 
 ## How to use:
 
