@@ -1,4 +1,4 @@
-import { BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext } from 'obsidian';
+import { App, BlockCache, CachedMetadata, Editor, LinkCache, MarkdownFileInfo, Notice, Plugin, TFile, parseLinktext } from 'obsidian';
 import { AliasPicker } from './AliasPicker';
 import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
@@ -118,18 +118,9 @@ export default class AliasPickerPlugin extends Plugin {
 				if (!currentFile || !editor) return;
 
 				if (!checking) {
-					const aliases = getKnownFileAliases(this.app, currentFile, this.settings.interpretFileNameAsAlias);
-
-					void this.app.fileManager.processFrontMatter(currentFile, (frontmatter: ObsidianFrontmatter) => {
-						const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
-						const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
-						if (newAliases.length === 0) {
-							new Notice('No new aliases to add');
-							return;
-						}
-						frontmatter.aliases = [...existingAliases, ...newAliases];
-						new Notice(`Added aliases: ${newAliases.join(', ')}`);
-					});
+					const app = this.app;
+					const settings = this.settings;
+					addAllAliasesToFile(app, currentFile, settings);
 				}
 				return true;
 			}
@@ -198,3 +189,18 @@ export default class AliasPickerPlugin extends Plugin {
 		return this.settings;
 	}
 }
+function addAllAliasesToFile(app: App, currentFile: TFile, settings: AliasPickerSettingsData) {
+	const aliases = getKnownFileAliases(app, currentFile, settings.interpretFileNameAsAlias);
+
+	void app.fileManager.processFrontMatter(currentFile, (frontmatter: ObsidianFrontmatter) => {
+		const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
+		const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
+		if (newAliases.length === 0) {
+			new Notice('No new aliases to add');
+			return;
+		}
+		frontmatter.aliases = [...existingAliases, ...newAliases];
+		new Notice(`Added aliases: ${newAliases.join(', ')}`);
+	});
+}
+
