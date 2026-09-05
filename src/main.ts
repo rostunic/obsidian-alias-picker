@@ -4,7 +4,7 @@ import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
 import { AliasRenameListener } from './AliasRenameListener';
 import { PathPicker } from './PathPicker';
-import { getKnownFileAliases, getParentFolders, normalizeAliases } from './utilities';
+import { getKnownAliasesOfAllFiles, getKnownFileAliases, getParentFolders, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
 import { Settings, AliasPickerSettingsData, DEFAULT_SETTINGS } from './settings';
 import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
@@ -236,10 +236,11 @@ async function addKnownAliasesToFiles(allFiles: TFile[], folderIdentifier: strin
 	let i = 0;
 	let addedCounter = 0;
 	let fileAddedCounter = 0;
+	const allKnownAliases = getKnownAliasesOfAllFiles(app, settings.interpretFileNameAsAlias);
 	for (const file of allFiles) {
 		i++;
 		notice.setMessage(`Adding all known aliases to file ${i}/${allFiles.length} of ${folderIdentifier}. Processing file ${i}/${allFiles.length}: ${file.path}`);
-		const added = await addAllAliasesToFile(app, file, settings);
+		const added = await addAllAliasesToFile(app, file, settings, allKnownAliases);
 		addedCounter += added.length;
 		fileAddedCounter += added.length > 0 ? 1 : 0;
 
@@ -252,8 +253,8 @@ async function addKnownAliasesToFiles(allFiles: TFile[], folderIdentifier: strin
 	window.setTimeout(() => notice.hide(), 3000);
 }
 
-async function addAllAliasesToFile(app: App, file: TFile, settings: AliasPickerSettingsData): Promise<string[]> {
-	const aliases = getKnownFileAliases(app, file, settings.interpretFileNameAsAlias);
+async function addAllAliasesToFile(app: App, file: TFile, settings: AliasPickerSettingsData, allKnownAliases: Map<string, Set<string>> | undefined = undefined): Promise<string[]> {
+	const aliases = getKnownFileAliases(app, file, settings.interpretFileNameAsAlias, allKnownAliases);
 
 	let addedAliases: string[] = [];
 

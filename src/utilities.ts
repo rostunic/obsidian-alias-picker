@@ -10,6 +10,34 @@ export function normalizeAliases(raw: unknown): string[] {
 	}
 	return [];
 }
+export function getKnownAliasesOfAllFiles(app: App, interpretFileNameAsAlias: boolean): Map<string, Set<string>> {
+	const result = new Map<string, Set<string>>();
+	if (interpretFileNameAsAlias) {
+		for (const file of app.vault.getMarkdownFiles()) {
+			result.set(file.path, new Set([file.basename]));
+		}
+	}
+	const resolvedLinks = app.metadataCache.resolvedLinks;
+	for (const [sourcePath] of Object.entries(resolvedLinks)) {
+		const sourceFile = app.vault.getFileByPath(sourcePath);
+		if (!sourceFile) continue;
+		const cache = app.metadataCache.getFileCache(sourceFile);
+		if (!cache) continue;
+		const links = cache.links ?? [];
+		for (const link of links) {
+			const targetFile = app.metadataCache.getFirstLinkpathDest(link.link, sourceFile.path);
+			if (!targetFile) continue;
+			const targetPath = targetFile.path;
+			const existing = result.get(targetPath);
+			if (existing) {
+				existing.add(link.displayText ?? targetFile.basename);
+			} else {
+				result.set(targetPath, new Set([link.displayText ?? targetFile.basename]));
+			}
+		}
+	}
+	return result;
+}
 
 export function getBacklinksArray(app: App, file: TFile) {
 	// Prefer Obsidian's internal backlinks API if available, but it is not stable across versions.
@@ -50,7 +78,10 @@ export function getBacklinksArray(app: App, file: TFile) {
 	return Array.from(result.entries());
 }
 
-export function getKnownFileAliases(app: App, currentFile: TFile, interpretFileNameAsAlias: boolean): Set<string> {
+export function getKnownFileAliases(app: App, currentFile: TFile, interpretFileNameAsAlias: boolean, allKnownAliases: Map<string, Set<string>> | undefined = undefined): Set<string> {
+	if (allKnownAliases) {
+		return allKnownAliases.get(currentFile.path) ?? new Set<string>();
+	}
 	const backlinksToCurrentFile = getBacklinksArray(app, currentFile);
 	const aliases = new Set<string>();
 	if (interpretFileNameAsAlias) {
