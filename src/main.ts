@@ -189,10 +189,10 @@ export default class AliasPickerPlugin extends Plugin {
 		return this.settings;
 	}
 }
-function addAllAliasesToFile(app: App, currentFile: TFile, settings: AliasPickerSettingsData) {
-	const aliases = getKnownFileAliases(app, currentFile, settings.interpretFileNameAsAlias);
+function addAllAliasesToFile(app: App, file: TFile, settings: AliasPickerSettingsData) {
+	const aliases = getKnownFileAliases(app, file, settings.interpretFileNameAsAlias);
 
-	void app.fileManager.processFrontMatter(currentFile, (frontmatter: ObsidianFrontmatter) => {
+	void app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
 		const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
 		const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
 		if (newAliases.length === 0) {
