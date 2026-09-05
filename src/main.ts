@@ -4,11 +4,12 @@ import { BlockPicker } from './BlockPicker';
 import { AliasCache } from './AliasCache';
 import { AliasRenameListener } from './AliasRenameListener';
 import { PathPicker } from './PathPicker';
-import { getKnownFileAliases, normalizeAliases } from './utilities';
+import { getKnownFileAliases, getParentFolders, normalizeAliases } from './utilities';
 import { AliasOverviewView } from './AliasOverviewView';
 import { Settings, AliasPickerSettingsData, DEFAULT_SETTINGS } from './settings';
 import { BacklinkSearchModal } from './BacklinkSearch/BacklinkSearchModal';
 import { ObsidianFrontmatter } from './obsidian';
+import { FolderPicker } from './FolderPicker';
 
 type Context = {
 
@@ -116,10 +117,49 @@ export default class AliasPickerPlugin extends Plugin {
 			editorCheckCallback: (checking: boolean, editor: Editor, activeFileInfo: MarkdownFileInfo) => {
 				const currentFile = activeFileInfo.file;
 				if (!currentFile || !editor) return;
-				if (!checking) addAllAliasesToFile(this.app, currentFile, this.settings);
+				if (!checking) {
+					const addAliases = async () => {
+						const added = await addAllAliasesToFile(this.app, currentFile, this.settings);
+						logAddedAliases(added, currentFile);
+					};
+					void addAliases();
+				}
 				return true;
 			}
 		});
+
+		this.addCommand({
+			id: 'fill-known-aliases-vault',
+			name: 'Add all known aliases to all files in the vault',
+			checkCallback: (checking: boolean) => {
+				if (!checking) {
+					const allFiles = this.app.vault.getMarkdownFiles();
+					const folderIdentifier = `the vault`;
+					const app = this.app;
+					const settings = this.settings;
+					void addKnownAliasesToFiles(allFiles, folderIdentifier, app, settings);
+				}
+				return true;
+			}
+		});
+		this.addCommand({
+			id: 'fill-known-aliases-folder',
+			name: 'Add all known aliases to all files in the current folder',
+			editorCheckCallback: (checking: boolean, editor: Editor, activeFileInfo: MarkdownFileInfo) => {
+				const activeFile = activeFileInfo.file;
+				if (!activeFile) return;
+				const parentFolders = getParentFolders(activeFile);
+				if (parentFolders.length === 0) return;
+				if (!checking) {
+					const picker = new FolderPicker(this.app, parentFolders, (folder) => {
+						const allFiles = folder.children.filter((child): child is TFile => child instanceof TFile && child.extension === 'md');
+						void addKnownAliasesToFiles(allFiles, folder.name, this.app, this.settings);
+					});
+					picker.open();
+				}
+				return true;
+			}
+		})
 
 		this.addCommand({
 			id: "open-backlink-search",
@@ -184,18 +224,58 @@ export default class AliasPickerPlugin extends Plugin {
 		return this.settings;
 	}
 }
-function addAllAliasesToFile(app: App, file: TFile, settings: AliasPickerSettingsData) {
-	const aliases = getKnownFileAliases(app, file, settings.interpretFileNameAsAlias);
+async function addKnownAliasesToFiles(allFiles: TFile[], folderIdentifier: string, app: App, settings: AliasPickerSettingsData) {
+	const notice = new Notice(`Adding all known aliases to all ${allFiles.length} files in ${folderIdentifier}. This may take a while...`, 0);
+	let i = 0;
+	let addedCounter = 0;
+	let fileAddedCounter = 0;
+	for (const file of allFiles) {
+		i++;
+		notice.setMessage(`Adding all known aliases to file ${i}/${allFiles.length} of ${folderIdentifier}. Processing file ${i}/${allFiles.length}: ${file.path}`);
+		const added = await addAllAliasesToFile(app, file, settings);
+		addedCounter += added.length;
+		fileAddedCounter += added.length > 0 ? 1 : 0;
 
-	void app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
-		const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
-		const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
-		if (newAliases.length === 0) {
-			new Notice('No new aliases to add');
-			return;
+		// Alle 10 Dateien den Main Thread freigeben
+		if (i % 10 === 0) {
+			await new Promise<void>(resolve => window.setTimeout(resolve, 0));
 		}
-		frontmatter.aliases = [...existingAliases, ...newAliases];
-		new Notice(`Added aliases: ${newAliases.join(', ')}`);
-	});
+	}
+	notice.setMessage(`Finished adding all known aliases to all ${allFiles.length} files in ${folderIdentifier}. Added a total of ${addedCounter} aliases to ${fileAddedCounter} files.`);
+	window.setTimeout(() => notice.hide(), 3000);
 }
 
+async function addAllAliasesToFile(app: App, file: TFile, settings: AliasPickerSettingsData): Promise<string[]> {
+	const aliases = getKnownFileAliases(app, file, settings.interpretFileNameAsAlias);
+
+	let addedAliases: string[] = [];
+
+	try {
+		await app.fileManager.processFrontMatter(file, (frontmatter: ObsidianFrontmatter) => {
+			const existingAliases: string[] = normalizeAliases(frontmatter?.aliases);
+			const newAliases = Array.from(aliases).filter(x => !existingAliases.includes(x));
+			if (newAliases.length === 0) {
+				return;
+			}
+			frontmatter.aliases = [...existingAliases, ...newAliases];
+			addedAliases = newAliases;
+		});
+	} catch (e) {
+		if (e instanceof Error) {
+			new Notice(`Error adding aliases to file ${file.path}: ${e.message}`);
+		}
+		return [];
+	}
+	return addedAliases;
+}
+function logAddedAliases(addedAliases: string[], file: TFile, notice: Notice | undefined = undefined, messagePrefix: string = '') {
+	const mesage = messagePrefix + (addedAliases.length > 0
+		? `Added aliases: ${addedAliases.join(', ')} to file ${file.path}`
+		: `No new aliases to add to file ${file.path}`);
+	if (notice) {
+		notice.setMessage(mesage);
+	}
+	else {
+		new Notice(mesage);
+	}
+}

@@ -1,5 +1,4 @@
-import { App, TFile, LinkCache } from 'obsidian';
-import { AdvancedMetadataCache } from './obsidian';
+import { App, TFile, LinkCache, TFolder } from 'obsidian';
 
 
 export function normalizeAliases(raw: unknown): string[] {
@@ -12,25 +11,23 @@ export function normalizeAliases(raw: unknown): string[] {
 	return [];
 }
 
-
 export function getBacklinksArray(app: App, file: TFile) {
 	// Prefer Obsidian's internal backlinks API if available, but it is not stable across versions.
 	// In some builds it can throw at runtime, so we must fall back to a public-API-based approach.
-	try {
-		const metadataCache = app.metadataCache as AdvancedMetadataCache;
-		if (typeof metadataCache.getBacklinksForFile === 'function') {
-			const backlinksObject = metadataCache.getBacklinksForFile(file);
-			if (backlinksObject?.data) return Array.from(backlinksObject.data.entries());
-		}
-	} catch {
-		// Fall through to public API fallback.
-	}
+	// try {
+	// 	const metadataCache = app.metadataCache as AdvancedMetadataCache;
+	// 	if (typeof metadataCache.getBacklinksForFile === 'function') {
+	// 		const backlinksObject = metadataCache.getBacklinksForFile(file);
+	// 		if (backlinksObject?.data) return Array.from(backlinksObject.data.entries());
+	// 	}
+	// } catch {
+	// 	// Fall through to public API fallback.
+	// }
 
 	// Fallback: compute backlinks by scanning the set of files that resolved-links to the target,
 	// then collecting the LinkCache entries that resolve to the same destination.
 	const targetPath = file.path;
-	const resolved = (app.metadataCache as unknown as { resolvedLinks?: Record<string, Record<string, number>> }).resolvedLinks;
-	if (!resolved) return [];
+	const resolved = app.metadataCache.resolvedLinks;
 
 	const result = new Map<string, LinkCache[]>();
 	for (const [sourcePath, dests] of Object.entries(resolved)) {
@@ -66,3 +63,12 @@ export function getKnownFileAliases(app: App, currentFile: TFile, interpretFileN
 	return aliases;
 }
 
+export function getParentFolders(file: TFile): TFolder[] {
+	const folders: TFolder[] = [];
+	let currentFolder = file.parent;
+	while (currentFolder) {
+		folders.push(currentFolder);
+		currentFolder = currentFolder.parent;
+	}
+	return folders;
+}
